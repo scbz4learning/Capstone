@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+__pypackages__/
+*.manifest
+*.spec
+.python-version
+pyvenv.cfg
+venv/
+ENV/
+env/
+.env
+.env.*
+
+# Pytest
+.cache/
+.pytest_cache/
+
+# Visual Studio Code
+.vscode/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# C/C++
+# Build output
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+
+# IDEs
+*.vcxproj*
+*.sln
+*.suo
+*.user
+*.userosscache
+*.opensdf
+*.sdf
+*.ipch
+*.iobj
+*.pch
+*.pdb
+
+# CLion
+.idea/
+
+# Misc
+*.log
+*.tmp
+*~
+
+# zensical
+**/site/
+
+**/.cache/

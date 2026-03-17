@@ -1,0 +1,1 @@
+# This is the journal of the capstone project
