@@ -297,9 +297,16 @@ scheme = "slate"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 
-# ----------------------------------------------------------------------------
-# The "extra" section contains miscellaneous settings.
-# ----------------------------------------------------------------------------
-#[[project.extra.social]]
-#icon = "fontawesome/brands/github"
-#link = "https://github.com/user/repo"
+# -------------------------
+# Enable Markdown extensions
+# -------------------------
+[markdown]
+# Use nl2br to convert single newlines into <br>
+extensions = ["nl2br"]
+
+# -------------------------
+# Add social icons (GitHub)
+# -------------------------
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/scbz4learning/Capstone"
