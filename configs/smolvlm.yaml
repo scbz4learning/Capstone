@@ -1,0 +1,8 @@
+model: SmolVLM
+model_id: HuggingFaceTB/SmolVLM-Instruct
+backend: torch
+device: cuda
+precision: bfloat16
+num_warmup: 2
+num_runs: 5
+max_new_tokens: 128

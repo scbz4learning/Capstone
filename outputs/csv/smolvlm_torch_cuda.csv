@@ -1,0 +1,2 @@
+device,model,backend,prefill_mean_latency_s,ttft_latency_s,decode_latency_s,itl_s_per_token,throughput_tokens_s,prefill_latencies_s,ttft_latencies_s,model_id,config
+cuda,SmolVLM,torch,11.636693239212036,19.106702089309692,22.161078691482544,0.34626685455441475,2.8879460648545936,"[8.27471137046814, 13.325482845306396, 13.309885501861572]",[19.106702089309692],HuggingFaceTB/SmolVLM-Instruct,configs/smolvlm.yaml

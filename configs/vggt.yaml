@@ -1,0 +1,7 @@
+model: VGGT
+model_id: facebook/VGGT-1B
+backend: torch
+device: cuda
+precision: bfloat16
+num_warmup: 2
+num_runs: 5

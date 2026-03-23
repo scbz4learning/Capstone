@@ -1,0 +1,11 @@
+torch==2.12.0a0+rocm7.13.0a20260317
+
+numpy==1.26.4
+pandas==3.0.1
+matplotlib==3.10.8
+transformers==5.3.0
+
+# ONNX Runtime ROCm variant
+onnxruntime-rocm==1.22.2.post1
+
+pyyaml==6.0.3

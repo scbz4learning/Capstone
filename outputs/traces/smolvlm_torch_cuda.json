@@ -1,0 +1,20 @@
+{
+  "device": "cuda",
+  "model": "SmolVLM",
+  "backend": "torch",
+  "prefill_mean_latency_s": 11.636693239212036,
+  "ttft_latency_s": 19.106702089309692,
+  "decode_latency_s": 22.161078691482544,
+  "itl_s_per_token": 0.34626685455441475,
+  "throughput_tokens_s": 2.8879460648545936,
+  "prefill_latencies_s": [
+    8.27471137046814,
+    13.325482845306396,
+    13.309885501861572
+  ],
+  "ttft_latencies_s": [
+    19.106702089309692
+  ],
+  "model_id": "HuggingFaceTB/SmolVLM-Instruct",
+  "config": "configs/smolvlm.yaml"
+}
