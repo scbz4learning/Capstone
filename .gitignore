@@ -70,3 +70,5 @@ Makefile
 **/site/
 
 **/.cache/
+**/models/
+**/profiling_logs/

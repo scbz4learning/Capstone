@@ -302,7 +302,14 @@ toggle.name = "Switch to light mode"
 # -------------------------
 [markdown]
 # Use nl2br to convert single newlines into <br>
-extensions = ["nl2br", "pymdownx.betterlists"]
+extensions = ["pymdownx.betterlists"]
+
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
 
 # -------------------------
 # Add social icons (GitHub)
