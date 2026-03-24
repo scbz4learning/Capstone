@@ -146,6 +146,23 @@ def profile_smolvlm():
                 if peak_mem_gb < 0.1: peak_mem_gb = cpu_mem_end
 
             hw_stats = monitor.stop()
+
+            # --- Trace Capture Step ---
+            # Capture trace for Prefill + 1 token generation
+            trace_file = os.path.join(OUTPUT_DIR, f"{run_name}_trace.json")
+            print(f"Capturing Chrome Trace for {run_name}...")
+            try:
+                with torch.profiler.profile(
+                    activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA] if dev_name == "cuda" else [torch.profiler.ProfilerActivity.CPU],
+                    record_shapes=True,
+                    with_stack=False
+                ) as prof:
+                    with torch.no_grad(), torch.amp.autocast(device_type=dev_name, dtype=dtype) if dtype != torch.float32 else torch.autocast(device_type=dev_name, enabled=False):
+                        model.generate(**inputs, max_new_tokens=2, use_cache=True)
+                prof.export_chrome_trace(trace_file)
+            except Exception as e:
+                print(f"Trace capture failed: {e}")
+
             avg_power = np.mean([s['power_w'] for s in hw_stats]) if hw_stats else 0.0
             avg_latency_s = (np.mean(ttft_list) + np.mean(tpot_list) * (MAX_NEW_TOKENS-1)) / 1000
             
