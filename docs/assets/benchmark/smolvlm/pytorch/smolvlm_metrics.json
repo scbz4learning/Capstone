@@ -1,0 +1,28 @@
+[
+    {
+        "device": "cuda",
+        "dtype": "bfloat16",
+        "attn": "eager",
+        "avg_ttft_ms": 9217.09399320007,
+        "avg_tpot_ms": 103.7173927448309,
+        "peak_mem_gb": 6.704277038574219,
+        "avg_power_w": 48.78008115183246,
+        "fps_per_watt": 0.05030758601529926,
+        "energy_per_step_j": 596.3315351858976,
+        "clocks_sclk_avg": 2559.1204188481674,
+        "hw_log_file": "./profiling_logs/smolvlm/cuda_bfloat16_eager_hw.csv"
+    },
+    {
+        "device": "cpu",
+        "dtype": "bfloat16",
+        "attn": "eager",
+        "avg_ttft_ms": 37688.413999399745,
+        "avg_tpot_ms": 135.4253032413845,
+        "peak_mem_gb": 5.290321350097656,
+        "avg_power_w": 43.42662899786781,
+        "fps_per_watt": 0.016599974977075597,
+        "energy_per_step_j": 1807.2316398928133,
+        "clocks_sclk_avg": 800.0,
+        "hw_log_file": "./profiling_logs/smolvlm/cpu_bfloat16_eager_hw.csv"
+    }
+]

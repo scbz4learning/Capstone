@@ -1,3 +1,0 @@
-device,dtype,avg_latency_s,avg_tokens_per_sec
-CPU,bfloat16,106.71039733886718,4.6855845367406035
-iGPU,bfloat16,61.88945140838623,8.078923284446176
