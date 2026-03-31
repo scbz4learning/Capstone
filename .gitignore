@@ -71,4 +71,6 @@ Makefile
 
 **/.cache/
 **/models/
-**/profiling_logs/
+
+# Profiling logs
+# **/profiling_logs/
