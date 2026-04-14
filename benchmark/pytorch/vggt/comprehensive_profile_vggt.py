@@ -1,4 +1,4 @@
-import torch
+﻿import torch
 import time
 import json
 import os
@@ -9,6 +9,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import psutil
 import sys
+import argparse
+import glob
+import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../../../third-party"))
 from vggt.models.vggt import VGGT
@@ -16,7 +19,6 @@ from vggt.utils.load_fn import load_and_preprocess_images
 
 # Configuration
 MODEL_ID = "facebook/VGGT-1B"
-DEVICES = ["cuda", "cpu"]
 DTYPES = [torch.bfloat16]
 NUM_WARMUP = 2
 NUM_TEST = 5
@@ -29,11 +31,13 @@ class HardwareMonitor:
         self.stop_event = threading.Event()
         self.log_file = log_file
         self.stats = []
-        self.thread = threading.Thread(target=self._monitor)
+        self.is_windows = os.name == 'nt'
+        if not self.is_windows:
+            self.thread = threading.Thread(target=self._monitor)
         
     def _monitor(self):
         cmd = ["rocm-smi", "--showpower", "--showuse", "--showclocks", "--json"]
-        with open(self.log_file, "w") as f:
+        with open(self.log_file, "w", encoding='utf-8') as f:
             f.write("timestamp,power_w,sclk_mhz,mclk_mhz,gpu_use_pct\n")
             while not self.stop_event.is_set():
                 try:
@@ -60,31 +64,71 @@ class HardwareMonitor:
                 except Exception as e: pass
                 time.sleep(0.1)
 
-    def start(self): self.thread.start()
+    def start(self): 
+        if not self.is_windows: self.thread.start()
     def stop(self):
         self.stop_event.set()
-        self.thread.join()
+        if not self.is_windows: self.thread.join()
         return self.stats
 
 def get_cpu_mem_gb():
     return psutil.Process(os.getpid()).memory_info().rss / (1024**3)
 
-def get_valid_configs():
+def get_valid_configs(args):
     configs = []
-    for dev in DEVICES:
+    devices = []
+    if args.gpu: devices.append("cuda")
+    if args.cpu: devices.append("cpu")
+    
+    for dev in devices:
         for dt in DTYPES:
             if dev == "cpu" and dt == torch.float16: continue
             configs.append({"device": dev, "dtype": dt})
     return configs
 
-def profile_vggt():
+def draw_vggt_plots(all_results):
+    if not all_results: return
+    df = pd.DataFrame(all_results)
+    df["config"] = df["device"] + "\n" + df["dtype"]
+    fig, axes = plt.subplots(1, 4, figsize=(20, 6))
+    metrics = [
+        ("avg_latency_ms", "Latency (ms)", "skyblue"),
+        ("peak_mem_gb", "Peak Memory (GB)", "lightgreen"),
+        ("fps_per_watt", "FPS per Watt", "gold"),
+        ("energy_per_step_j", "Energy per Inference (J)", "orchid"),
+    ]
+    for i, (col, title, color) in enumerate(metrics):
+        ax = axes[i]
+        if col in df.columns:
+            ax.bar(df["config"], df[col], color=color)
+            ax.set_title(title)
+            for p in ax.patches:
+                ax.annotate(f"{p.get_height():.2f}", (p.get_x() + p.get_width() / 2., p.get_height()), ha='center', xytext=(0, 5), textcoords='offset points')
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, "vggt_detailed_comparison.png"))
+    print("Plots updated:", os.path.join(OUTPUT_DIR, "vggt_detailed_comparison.png"))
+
+def profile_vggt(args):
+    configs = get_valid_configs(args)
+    if not configs:
+        print("No valid configurations to run.")
+        return
+
+    is_windows = os.name == 'nt'
+    needs_logging = is_windows and any(c["device"] == "cuda" for c in configs)
+
     print("--- Starting Advanced Profiling for VGGT ---")
+    if needs_logging:
+        while True:
+            ans = input("[Windows] Please open 'AMD Software: Adrenalin Edition' -> 'Performance' -> 'Start Logging'. Have you started logging? (y/n): ")
+            if ans.lower().strip() in ['y', 'yes', '']:
+                break
+        
     image_names = ["third-party/vggt/examples/kitchen/images/00.png", "third-party/vggt/examples/kitchen/images/01.png"]
     if not all(os.path.exists(img) for img in image_names):
         print(f"Warning: Example images not found. Looked for {image_names}")
         return
         
-    configs = get_valid_configs()
     all_results = []
 
     for cfg in configs:
@@ -96,11 +140,8 @@ def profile_vggt():
 
         try:
             device = torch.device(dev_name)
-            # Fix initialization: VGGT doesn't accept torch_dtype or attn_implementation
-            # Do NOT use .to(dtype) on the model itself, as VGGT heads expect Float due to manual autocast(False) in its code
             model = VGGT.from_pretrained(MODEL_ID).to(device).eval()
             images = load_and_preprocess_images(image_names).to(device)
-            # VGGT expects images of shape [1, S, 3, H, W] for sequence, wrapper handles it
             
             hw_log = os.path.join(OUTPUT_DIR, f"{run_name}_hw.csv")
             monitor = HardwareMonitor(hw_log)
@@ -111,22 +152,19 @@ def profile_vggt():
             cpu_mem_start = get_cpu_mem_gb()
             if dev_name == "cuda":
                 torch.cuda.reset_peak_memory_stats()
-                
+             
+            run_start_time = time.time()
             with torch.no_grad(), torch.amp.autocast(device_type=dev_name, dtype=dtype) if dtype != torch.float32 else torch.autocast(device_type=dev_name, enabled=False):
-                # 1 image pair processed per call (2 frames total?) Actually load_and_preprocess_images loads them into a video sequence tensor.
                 for i in range(NUM_WARMUP + NUM_TEST):
                     torch.cuda.synchronize() if dev_name == "cuda" else None
                     t0 = time.perf_counter()
-                    
-                    # Single forward pass for Vision Model
                     outputs = model(images)
-                    
                     torch.cuda.synchronize() if dev_name == "cuda" else None
                     latency = (time.perf_counter() - t0) * 1000
-                    
                     if i >= NUM_WARMUP:
                         latencies.append(latency)
-                
+            run_end_time = time.time()
+            
             if dev_name == "cuda":
                 peak_mem_gb = torch.cuda.max_memory_allocated() / (1024**3)
             else:
@@ -136,8 +174,6 @@ def profile_vggt():
 
             hw_stats = monitor.stop()
 
-            # --- Trace Capture Step ---
-            # Capture trace in a separate pass to avoid slowing down latency measurements
             trace_file = os.path.join(OUTPUT_DIR, f"{run_name}_trace.json")
             print(f"Capturing Chrome Trace for {run_name}...")
             try:
@@ -167,10 +203,13 @@ def profile_vggt():
                 "avg_power_w": avg_power,
                 "fps_per_watt": fps_watt,
                 "energy_per_step_j": energy_joules,
-                "hw_log_file": hw_log
+                "hw_log_file": hw_log,
+                "run_start_time": run_start_time,
+                "run_end_time": run_end_time,
+                "config": run_name
             }
             all_results.append(res)
-            print(f"Results: Latency {res['avg_latency_ms']:.1f}ms | Mem {res['peak_mem_gb']:.2f}GB | Power {res['avg_power_w']:.1f}W | FPS {fps:.1f}")
+            print(f"Results: Latency {res['avg_latency_ms']:.1f}ms | Mem {res['peak_mem_gb']:.2f}GB")
 
             del model
             torch.cuda.empty_cache() if dev_name == "cuda" else None
@@ -179,25 +218,73 @@ def profile_vggt():
     with open(os.path.join(OUTPUT_DIR, "vggt_metrics.json"), "w") as f:
         json.dump(all_results, f, indent=4)
         
-    if all_results:
-        df = pd.DataFrame(all_results)
-        df["config"] = df["device"] + "\n" + df["dtype"]
-        fig, axes = plt.subplots(1, 4, figsize=(20, 6))
-        metrics = [
-            ("avg_latency_ms", "Latency (ms)", "skyblue"),
-            ("peak_mem_gb", "Peak Memory (GB)", "lightgreen"),
-            ("fps_per_watt", "FPS per Watt", "gold"),
-            ("energy_per_step_j", "Energy per Inference (J)", "orchid"),
-        ]
-        for i, (col, title, color) in enumerate(metrics):
-            ax = axes[i]
-            ax.bar(df["config"], df[col], color=color)
-            ax.set_title(title)
-            for p in ax.patches:
-                ax.annotate(f"{p.get_height():.2f}", (p.get_x() + p.get_width() / 2., p.get_height()), ha='center', xytext=(0, 5), textcoords='offset points')
-        plt.tight_layout()
-        plt.savefig(os.path.join(OUTPUT_DIR, "vggt_detailed_comparison.png"))
-        print("\nProfiling Complete! Data saved to:", OUTPUT_DIR)
+    draw_vggt_plots(all_results)
+    
+    if needs_logging:
+        while True:
+            ans = input("\n[Windows] Profiling finished. Please stop logging in Adrenalin now. Have you stopped logging? (y/n): ")
+            if ans.lower().strip() in ['y', 'yes', '']:
+                break
+        post_process()
+
+def post_process():
+    metrics_file = os.path.join(OUTPUT_DIR, "vggt_metrics.json")
+    if not os.path.exists(metrics_file):
+        print(f"Metrics file not found: {metrics_file}. Please run profiling first.")
+        return
+    with open(metrics_file, "r") as f:
+        results = json.load(f)
+    
+    cn_dir = os.path.join(os.getenv('LOCALAPPDATA', ''), 'AMD', 'CN')
+    csv_files = glob.glob(os.path.join(cn_dir, "Hardware.*.CSV"))
+    csv_files.sort(key=os.path.getmtime, reverse=True)
+    if not csv_files:
+        print(f"No CSV files found in {cn_dir}. Please export logs from Adrenalin.")
+        return
+    
+    print(f"Found {len(csv_files)} Hardware CSVs in {cn_dir}, reading the latest: {csv_files[0]}")
+
+    def parse_time(ts_str):
+        try: return datetime.datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f").timestamp()
+        except: return 0.0
+
+    for res in results:
+        r_start = res.get("run_start_time", 0)
+        r_end = res.get("run_end_time", 0)
+        if r_start == 0: continue
+        
+        for csv_file in csv_files:
+            try:
+                df = pd.read_csv(csv_file)
+                df = df[df["TIME STAMP"] != "N/A"]
+                df["ts"] = df["TIME STAMP"].apply(parse_time)
+                mask = (df["ts"] >= (r_start - 2.0)) & (df["ts"] <= (r_end + 2.0))
+                matched = df[mask]
+                if not matched.empty:
+                    avg_pwr = float(matched["GPU PWR"].mean())
+                    res["avg_power_w"] = avg_pwr
+                    print(f"[{res['config']}] Matched {len(matched)} CSV records, avg power: {avg_pwr:.1f}W")
+                    if "avg_latency_ms" in res:
+                        avg_latency_s = res["avg_latency_ms"] / 1000
+                        fps = 2 / avg_latency_s
+                        res["fps_per_watt"] = fps / avg_pwr if avg_pwr > 0 else 0
+                        res["energy_per_step_j"] = avg_pwr * avg_latency_s
+                    break
+            except Exception as e:
+                print(f"Failed to read {csv_file}: {e}")
+
+    with open(metrics_file, "w") as f:
+        json.dump(results, f, indent=4)
+    draw_vggt_plots(results)
 
 if __name__ == "__main__":
-    profile_vggt()
+    parser = argparse.ArgumentParser(description="Profile VGGT model.")
+    parser.add_argument("--cpu", action="store_true", help="Enable CPU profiling")
+    parser.add_argument("--gpu", action="store_true", help="Enable GPU profiling")
+    parser.add_argument("--npu", action="store_true", help="Enable NPU profiling (not fully supported yet)")
+    args = parser.parse_args()
+    
+    if not (args.cpu or args.gpu or args.npu):
+        args.cpu = args.gpu = args.npu = True
+        
+    profile_vggt(args)
