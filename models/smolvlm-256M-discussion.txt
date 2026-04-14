@@ -1,0 +1,402 @@
+Hugging Face's logo
+Hugging Face
+Models
+Datasets
+Spaces
+Buckets
+new
+Docs
+Enterprise
+Pricing
+
+
+HuggingFaceTB
+/
+SmolVLM-256M-Instruct 
+
+like
+346
+
+Follow
+Hugging Face Smol Models Research
+3.53k
+Image-Text-to-Text
+Transformers
+ONNX
+Safetensors
+
+HuggingFaceM4/the_cauldron
+
+HuggingFaceM4/Docmatix
+English
+idefics3
+conversational
+
+arxiv:
+2504.05299
+
+License:
+apache-2.0
+Model card
+Files and versions
+xet
+Community
+18
+ONNX Demo code
+#4
+by cnmoro - opened Jan 24, 2025
+Discussion
+cnmoro
+Jan 24, 2025
+
+Can we have a code sample for usage with onnx files ?
+(in Python, not JS)
+
+Thanks! Awesome little model
+
+dnhkng
+Jan 24, 2025
+
+Seconded, I will use this everywhere!
+
+mobinln
+Jan 29, 2025
+
+It would be so cool if we have demo code with onnx and python 🙌
+
+mbiswas
+Feb 1, 2025
+
+@Xenova - Will it be feasible to share how the onnx models are made in addition to a sample code in python? Optimum package does not support Idefics3 exports as of now. Curious how you have made these models.
+
+dnhkng
+Feb 1, 2025
+•
+edited Feb 1, 2025
+
+I spent about 2 hours last night poking around the models to get them to work. (i.e. get the image and text data into the right format, find the masking tokens format etc etc, and do a full forward pass).
+
+After finally getting the system running, they generate nonsense tokens 😥
+
+At this stage I don't know what the issue is, whether its my code or the models. Has anyone seen these onnx models tested somewhere?
+
+mbiswas
+Feb 2, 2025
+
+I spent about 2 hours last night poking around the models to get them to work. (i.e. get the image and text data into the right format, find the masking tokens format etc etc, and do a full forward pass).
+
+After finally getting the system running, they generate nonsense tokens 😥
+
+At this stage I don't know what the issue is, whether its my code or the models. Has anyone seen these onnx models tested somewhere?
+
+The webgpu transformers.js uses the onnx models. I guess something can be found by debugging it and comparing the results. Smolvlm 256m instruction webgpu space can be the starting point. BTW any clue on how these onnx models are made?
+
+dnhkng
+Feb 3, 2025
+•
+edited Feb 4, 2025
+
+This is as far as I got:
+https://gist.github.com/dnhkng/a7e9914e4f039c1063b0b692ae9a87a2
+
+The onnx vision and text models generate the correct embeddings, and has tested against the PyTorch model intermediate outputs. To note, the vision onnx model combines the Idefics3VisionTransformer and Idefics3Connector into one model.
+
+Idefics3Model(
+  (vision_model): Idefics3VisionTransformer(
+    (embeddings): Idefics3VisionEmbeddings(
+      (patch_embedding): Conv2d(3, 768, kernel_size=(16, 16), stride=(16, 16), padding=valid)
+      (position_embedding): Embedding(1024, 768)
+    )
+    (encoder): Idefics3Encoder(
+      (layers): ModuleList(
+        (0-11): 12 x Idefics3EncoderLayer(
+          (self_attn): Idefics3VisionFlashAttention2(
+            (k_proj): Linear(in_features=768, out_features=768, bias=True)
+            (v_proj): Linear(in_features=768, out_features=768, bias=True)
+            (q_proj): Linear(in_features=768, out_features=768, bias=True)
+            (out_proj): Linear(in_features=768, out_features=768, bias=True)
+          )
+          (layer_norm1): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+          (mlp): Idefics3VisionMLP(
+            (activation_fn): PytorchGELUTanh()
+            (fc1): Linear(in_features=768, out_features=3072, bias=True)
+            (fc2): Linear(in_features=3072, out_features=768, bias=True)
+          )
+          (layer_norm2): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+        )
+      )
+    )
+    (post_layernorm): LayerNorm((768,), eps=1e-06, elementwise_affine=True)
+  )
+  (connector): Idefics3Connector(
+    (modality_projection): Idefics3SimpleMLP(
+      (proj): Linear(in_features=12288, out_features=576, bias=False)
+    )
+  )
+  (text_model): LlamaModel(
+    (embed_tokens): Embedding(49280, 576, padding_idx=2)
+    (layers): ModuleList(
+      (0-29): 30 x LlamaDecoderLayer(
+        (self_attn): LlamaAttention(
+          (q_proj): Linear(in_features=576, out_features=576, bias=False)
+          (k_proj): Linear(in_features=576, out_features=192, bias=False)
+          (v_proj): Linear(in_features=576, out_features=192, bias=False)
+          (o_proj): Linear(in_features=576, out_features=576, bias=False)
+        )
+        (mlp): LlamaMLP(
+          (gate_proj): Linear(in_features=576, out_features=1536, bias=False)
+          (up_proj): Linear(in_features=576, out_features=1536, bias=False)
+          (down_proj): Linear(in_features=1536, out_features=576, bias=False)
+          (act_fn): SiLU()
+        )
+        (input_layernorm): LlamaRMSNorm((576,), eps=1e-05)
+        (post_attention_layernorm): LlamaRMSNorm((576,), eps=1e-05)
+      )
+    )
+    (norm): LlamaRMSNorm((576,), eps=1e-05)
+    (rotary_emb): LlamaRotaryEmbedding()
+  )
+)
+
+I'm not sure at all how the decoder should work. The my attempts generates text, but its unrelated to the image!
+I've tried to poke around in the HuggingFace repo, but it's "professional-levels" of indirection. i.e. I think it would take me a few days or weeks to find the actual generator code, through the maze of mixins and abstractions.
+
+Anyway, by "generate_from_vision function" is totally busted. I'm not even sure I am concatenating the vision and text embeddings correctly, let alone how the positional encoding and masking should be written. Maybe someone can help with this?
+
+Xenova
+Hugging Face Smol Models Research org
+Feb 4, 2025
+•
+edited Feb 4, 2025
+
+@dnhkng you were very close! Here's some sample code to run the model in python:
+
+from transformers import AutoConfig, AutoProcessor
+from transformers.image_utils import load_image
+import onnxruntime
+import numpy as np
+
+# 1. Load models
+## Load config and processor
+model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
+config = AutoConfig.from_pretrained(model_id)
+processor = AutoProcessor.from_pretrained(model_id)
+
+## Load sessions
+## !wget https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct/resolve/main/onnx/vision_encoder.onnx
+## !wget https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct/resolve/main/onnx/embed_tokens.onnx
+## !wget https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct/resolve/main/onnx/decoder_model_merged.onnx
+vision_session = onnxruntime.InferenceSession("vision_encoder.onnx")
+embed_session = onnxruntime.InferenceSession("embed_tokens.onnx")
+decoder_session = onnxruntime.InferenceSession("decoder_model_merged.onnx")
+
+## Set config values
+num_key_value_heads = config.text_config.num_key_value_heads
+head_dim = config.text_config.head_dim
+num_hidden_layers = config.text_config.num_hidden_layers
+eos_token_id = config.text_config.eos_token_id
+image_token_id = config.image_token_id
+
+
+# 2. Prepare inputs
+## Create input messages
+messages = [
+    {
+        "role": "user",
+        "content": [
+            {"type": "image"},
+            {"type": "text", "text": "Can you describe this image?"}
+        ]
+    },
+]
+
+## Load image and apply processor
+image = load_image("https://cdn.britannica.com/61/93061-050-99147DCE/Statue-of-Liberty-Island-New-York-Bay.jpg")
+prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
+inputs = processor(text=prompt, images=[image], return_tensors="np")
+
+## Prepare decoder inputs
+batch_size = inputs['input_ids'].shape[0]
+past_key_values = {
+    f'past_key_values.{layer}.{kv}': np.zeros([batch_size, num_key_value_heads, 0, head_dim], dtype=np.float32)
+    for layer in range(num_hidden_layers)
+    for kv in ('key', 'value')
+}
+image_features = None
+input_ids = inputs['input_ids']
+attention_mask = inputs['attention_mask']
+position_ids = np.cumsum(inputs['attention_mask'], axis=-1)
+
+
+# 3. Generation loop
+max_new_tokens = 1024
+generated_tokens = np.array([[]], dtype=np.int64)
+for i in range(max_new_tokens):
+  inputs_embeds = embed_session.run(None, {'input_ids': input_ids})[0]
+
+  if image_features is None:
+    ## Only compute vision features if not already computed
+    image_features = vision_session.run(
+        ['image_features'],  # List of output names or indices
+        {
+            'pixel_values': inputs['pixel_values'],
+            'pixel_attention_mask': inputs['pixel_attention_mask'].astype(np.bool_)
+        }
+    )[0]
+    
+    ## Merge text and vision embeddings
+    inputs_embeds[inputs['input_ids'] == image_token_id] = image_features.reshape(-1, image_features.shape[-1])
+
+  logits, *present_key_values = decoder_session.run(None, dict(
+      inputs_embeds=inputs_embeds,
+      attention_mask=attention_mask,
+      position_ids=position_ids,
+      **past_key_values,
+  ))
+
+  ## Update values for next generation loop
+  input_ids = logits[:, -1].argmax(-1, keepdims=True)
+  attention_mask = np.ones_like(input_ids)
+  position_ids = position_ids[:, -1:] + 1
+  for j, key in enumerate(past_key_values):
+    past_key_values[key] = present_key_values[j]
+
+  generated_tokens = np.concatenate([generated_tokens, input_ids], axis=-1)
+  if (input_ids == eos_token_id).all():
+    break
+
+  ## (Optional) Streaming
+  print(processor.decode(input_ids[0]), end='')
+print()
+
+# 4. Output result
+print(processor.batch_decode(generated_tokens))
+
+Example output:
+
+ The image depicts a large, historic statue of Liberty situated on a small island in a body of water. The statue is a green, cylindrical structure with a human figure at the top, which is the actual statue of Liberty. The statue is mounted on a pedestal that is supported by a cylindrical tower. The pedestal is rectangular and appears to be made of stone or a similar material. The statue is surrounded by a large, flat, rectangular area that is likely a base for the statue.
+
+In the background, there is a cityscape with a variety of buildings, including skyscrapers and high-rise buildings. The sky is clear with a gradient of colors, transitioning from a pale blue at the top to a deeper blue at the bottom. The buildings are mostly modern, with a mix of glass and concrete. The buildings are densely packed, with many skyscrapers and high-rise buildings visible.
+
+There are trees and greenery visible on the left side of the image, indicating that the statue is located near a park or a park area. The water in the foreground is calm, with small ripples indicating that the statue is in the water.
+
+The overall scene suggests a peaceful and serene environment, likely a public park or a park area in a city. The statue is likely a representation of liberty, representing the city's commitment to freedom and democracy.
+
+### Analysis and Description:
+
+#### Statue of Liberty:
+- **Location**: The statue is located on a small island in a body of water.
+- **Statue**: The statue is a green cylindrical structure with a human figure at the top, which is the actual statue of Liberty.
+- **Pedestal**: The pedestal is rectangular and supports the statue.
+- **Pedestrian**: The pedestal is surrounded by a flat rectangular area.
+- **Water**: The water is calm, with small ripples indicating that the statue is in the water.
+
+#### Cityscape:
+- **Buildings**: The buildings are modern, with a mix of glass and concrete.
+- **Sky**: The sky is clear with a gradient of colors, transitioning from a pale blue at the top to a deeper blue at the bottom.
+- **Trees**: There are trees and greenery visible on the left side of the image, indicating that the statue is located near a park or a park area.
+
+#### Environment:
+- **Water**: The water is calm, with small ripples indicating that the statue is in the water.
+- **Sky**: The sky is clear with a gradient of colors, transitioning from a pale blue at the top to a deeper blue at the bottom.
+
+### Conclusion:
+The image depicts a peaceful and serene public park or park area in a city, with the statue of Liberty prominently featured. The cityscape in the background includes modern buildings and a clear sky, suggesting a well-maintained public space.<end_of_utterance>
+
+dnhkng
+Feb 14, 2025
+•
+edited Feb 14, 2025
+
+@Xenova Are any trick required to get the model to work with multiple images? I have it working with two images, but when I ask SmolVLM to describe each, I get the description of one of the images twice.
+
+I have tried embedding both images at the same time via the vision encoder, or embedding each separately. I am careful to make sure the embeddings replace the image tags in the correct positions, but I can't seem to get this working form more than one image.
+
+Xenova
+Hugging Face Smol Models Research org
+Feb 17, 2025
+
+Hey @dnhkng! I asked @mfarre and he says:
+
+by inspecting the multiimage datasets we can see that usually they insert some text between images. basic example: do you prefer this image <image> or this image <image>?
+give it a shot to see if this type of construction helps in your case 
+
+sbrzz
+Mar 14, 2025
+
+FYI a JS version of the python code https://www.gradients.zone/blog/multimodal-llms-at-the-edge/
+
+adomi
+Mar 26, 2025
+•
+edited Mar 26, 2025
+
+I'm working with the Idefics3 model and noticed a difference in the shapes of the pixel_attention_mask during training versus in the vision encoder's ONNX model. Specifically:
+
+During training, the pixel_attention_mask has a shape of (32, 32).
+
+However, the vision encoder in the exported ONNX model expects a shape of (512, 512).
+
+Any idea ?
+
+jabbershort
+Apr 16, 2025
+•
+edited Apr 16, 2025
+
+@Xenova , thanks for giving some code, its super helpful. Unfortunately when trying to run this my output is a long stream of "fake_token_around_image" and "image" I guess I'm missing some token configuration or I have a mismatched version of transformers (I'm using 4.51), can you give me any hints?
+
+tohruk1117
+Apr 19, 2025
+
+@Xenova , thanks for giving some code, its super helpful. Unfortunately when trying to run this my output is a long stream of "fake_token_around_image" and "image" I guess I'm missing some token configuration or I have a mismatched version of transformers (I'm using 4.51), can you give me any hints?
+
+I also had the same issue, but I noticed that the decoder_model_merged.onnx has been changed in 7e3e67e and I was able get the same results as @Xenova after changing the ONNX to be older version. Hope this helps.
+
+jabbershort
+Apr 20, 2025
+
+@Xenova , thanks for giving some code, its super helpful. Unfortunately when trying to run this my output is a long stream of "fake_token_around_image" and "image" I guess I'm missing some token configuration or I have a mismatched version of transformers (I'm using 4.51), can you give me any hints?
+
+I also had the same issue, but I noticed that the decoder_model_merged.onnx has been changed in 7e3e67e and I was able get the same results as @Xenova after changing the ONNX to be older version. Hope this helps.
+
+Absolutely amazing, thank you so much, that fixed it straight away.!
+
+Teijiangzaimilan
+Apr 20, 2025
+•
+edited Apr 20, 2025
+
+I spent about 2 hours last night poking around the models to get them to work. (i.e. get the image and text data into the right format, find the masking tokens format etc etc, and do a full forward pass).
+
+After finally getting the system running, they generate nonsense tokens 😥
+
+At this stage I don't know what the issue is, whether its my code or the models. Has anyone seen these onnx models tested somewhere?
+
+The webgpu transformers.js uses the onnx models. I guess something can be found by debugging it and comparing the results. Smolvlm 256m instruction webgpu space can be the starting point. BTW any clue on how these onnx models are made?
+I tried the demo on https://huggingface.co/spaces/HuggingFaceTB/SmolVLM-256M-Instruct-WebGPU and also ran it locally, but the outputs were very different. For example，this image ("https://huggingface.co/datasets/Xenova/transformers.js-docs/resolve/main/new-york.jpg"), which only displays "here is the statue of liberty" locally, can you give me some hints？@jabbershort @Xenova 
+
+yarontal
+Apr 25, 2025
+
+After finetuning
+I work on an A10g GPU
+AND I TOOK a lot of time
+Are there tricks for speed inference?
+
+Hirunika
+Apr 29, 2025
+
+Hi, anyone try this model with android
+
+Upload images, audio, and videos by dragging in the text input, pasting, or clicking here.
+System theme
+TOS
+Privacy
+About
+Careers
+Models
+Datasets
+Spaces
+Pricing
+Docs

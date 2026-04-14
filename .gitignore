@@ -70,5 +70,12 @@ Makefile
 **/site/
 
 **/.cache/
-**/models/
+**/models/vggt
+**/models/SmolVLM-Instruct
 **/profiling_logs/
+
+**/cache
+**/cache_int8
+**/cache_static
+**/__pycache__/
+**/logs
