@@ -72,7 +72,9 @@ Makefile
 **/.cache/
 **/models/vggt
 **/models/SmolVLM-Instruct
-**/profiling_logs/
+
+# Profiling logs
+# **/profiling_logs/
 
 **/cache
 **/cache_int8
