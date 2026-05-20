@@ -1,7 +1,214 @@
-# Ubuntu
+# Ubuntu Environment Setup
 
-## Roadmap
+## NPU Support Status
 
-1. pytorch: only support CPU and iGPU.
-2. onnxruntime: only support CPU and iGPU. The support for NPU is only able on windows as [Vitis AI](https://github.com/Xilinx/Vitis-AI) has windows distribution only.
-3. vllm plugin and IRON: planned.
+!!! note "NPU on Ubuntu"
+    The XDNA 1 (X1) NPU on this platform **only supports CPU and iGPU** via conventional frameworks. NPU-native support on Linux is in **early development stage**.
+
+    Developers interested in NPU experimentation should refer to the [Developer Guide](../../appendix/developer-guide.md), which covers:
+    - **ROCm / MLIR** — MLIR-based compiler infrastructure
+    - **AMD AI Engine (AIE)** — low-level NPU compute fabric
+    - **IREE** — MLIR-based compiler with experimental NPU backend
+
+## Prerequisite
+
+### Hardware
+The experimental device is a 零刻 SER mini-pc.
+
+Specification:
+  - AMD Ryzen 8845HS
+  - 32GiB RAM
+  - 1TiB SSD
+
+### OS requirement
+[only support Ubuntu 24.04.3, Ubuntu 22.04.5, RHEL 10.1, and RHEL 9.7](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html#rdna-os)
+
+Some GUI may be conflicted with the newest `amdgpu` driver.
+
+Tested:
+- Ubuntu 24.04 LTS Server (no GUI)
+- Ubuntu-mate (Ubuntu 24.04 LTS)
+
+Not Supported:
+- Ubuntu 24.04 LTS Cinnamon (cannot boot after install the newest `amdgpu` driver, error code -22)
+
+UnTested:
+- Ubuntu 24.04 LTS Desktop (gnome)
+- ...
+
+### VGRAM
+
+It is recommended to fix 16GiB for VGRAM as my experiments take about 8.8 GiB memory on iGPU for each model with recorded parameters.
+
+The standard way of configuration is: **Bios -> Advanced -> AMD CBS -> NBIO -> GFX config**.
+
+## Building Tools
+
+```bash
+sudo apt update
+sudo apt install gfortran git ninja-build cmake g++ pkg-config xxd patchelf automake libtool python3-venv python3-dev libegl1-mesa-dev texinfo bison flex
+```
+
+## Installation
+
+There are tipically 3 ways. The easiest way now is to use the pre-built tarballs / wheels / deb.
+
+### Prebuilt
+
+For more info, check [TheRock release page](https://github.com/ROCm/TheRock/blob/main/RELEASES.md#installing-releases-using-pip)
+
+#### Install ROCm
+```bash
+# RoCm Installation
+# https://rocm.docs.amd.com/projects/install-on-linux/en/docs-7.2.0/install/quick-start.html
+wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/noble/amdgpu-install_7.2.70200-1_all.deb
+# This will take about 30GiB spaces and hours of time
+sudo apt install -y ./amdgpu-install_7.2.70200-1_all.deb
+sudo apt update
+sudo apt install -y python3-setuptools python3-wheel
+sudo usermod -a -G render,video $LOGNAME # Add the current user to the render and video groups
+newgrp render video
+sudo apt install -y rocm
+```
+
+#### Checking AMDGPU Driver
+
+```bash
+# Driver check (skip reinstall if already OK)
+REQUIRED_AMDGPU="1:7.2.70200-2278374.24.04"
+INSTALLED_AMDGPU=$(dpkg-query -W -f='${Version}' amdgpu 2>/dev/null || true)
+
+if [ "$INSTALLED_AMDGPU" = "$REQUIRED_AMDGPU" ] && lsmod | grep -q amdgpu; then
+  echo "✔ AMDGPU driver version $INSTALLED_AMDGPU is installed and module is loaded. Skipping driver reinstall."
+else
+  cat <<'EOF'
+
+⚠️ AMDGPU driver check failed (version mismatch or module not loaded).
+
+Installed version: ${INSTALLED_AMDGPU:-<none>}
+Required version:  $REQUIRED_AMDGPU
+
+To reinstall the driver manually, run the steps below from a text console (Ctrl+Alt+F3):
+
+  sudo apt autoremove -y amdgpu-dkms
+  sudo rm -f /etc/apt/sources.list.d/amdgpu.list
+  sudo rm -rf /var/cache/apt/*
+  sudo apt clean all
+  sudo apt install -y ./amdgpu-install_7.2.70200-1_all.deb
+  sudo apt update
+  sudo apt install -y "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)"
+  sudo apt install -y amdgpu-dkms
+  sudo update-initramfs -u -k all
+  sudo reboot
+
+EOF
+  exit 1
+fi
+```
+
+#### Install `uv` and Activate `uv` Virtual Environment
+
+```bash
+sudo apt update
+sudo apt install curl -y
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv venv venv
+source venv/bin/activate
+```
+
+#### Install Pre-built Packages
+
+```bash
+uv pip install --pre torch torchvision torchaudio \
+  --index-url https://rocm.nightlies.amd.com/v2/gfx110X-all/
+```
+
+#### Test ROCm Availability
+
+```python
+import torch
+import time
+
+print("ROCm:", torch.version.hip)
+print("GPU available:", torch.cuda.is_available())
+
+if torch.cuda.is_available():
+    print(torch.cuda.get_device_name(0))
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
+
+# Create deterministic tensors
+tensor_a_cpu = torch.full((1000, 1000), 2.0, device='cpu')
+tensor_b_cpu = torch.full((1000, 1000), 3.0, device='cpu')
+
+# CPU computation
+start_time = time.time()
+result_cpu = tensor_a_cpu + tensor_b_cpu
+cpu_time = time.time() - start_time
+print(f"CPU operation took: {cpu_time:.6f} seconds")
+
+# GPU computation
+if torch.cuda.is_available():
+    tensor_a_gpu = tensor_a_cpu.to('cuda')
+    tensor_b_gpu = tensor_b_cpu.to('cuda')
+
+    torch.cuda.synchronize()  # ensure accurate timing
+    start_time = time.time()
+
+    result_gpu = tensor_a_gpu + tensor_b_gpu
+
+    torch.cuda.synchronize()  # wait for GPU to finish
+    gpu_time = time.time() - start_time
+    print(f"GPU operation took: {gpu_time:.6f} seconds")
+
+    # Move GPU result back to CPU for comparison
+    result_gpu_cpu = result_gpu.to('cpu')
+
+    # Verify correctness
+    if torch.allclose(result_cpu, result_gpu_cpu):
+        print("CPU and GPU results match!")
+    else:
+        print("Results differ!")
+```
+
+Sample output
+
+```bash
+CPU operation took: 0.004181 seconds
+GPU operation took: 0.001731 seconds
+CPU and GPU results match!
+```
+
+### Old method
+Before Dec 2025, `pyTorch` with ROCm supports should be installed by changing arch to `gtx1100` by `export HSA_OVERRIDE_GFX_VERSION=11.0.0`. It is not neccessary now.
+
+### Build from Source
+
+- [ ] [WIP]
+
+[ROCm can be built by TheRock from source.](https://github.com/ROCm/ROCm?tab=readme-ov-file#getting-and-building-rocm-from-source)
+[TheRock now supports gfx110X-all](https://github.com/ROCm/TheRock/blob/main/RELEASES.md#manual-tarball-extraction)
+
+## ONNX Runtime
+
+If ROCm is already installed, ONNX Runtime with MIGraphX EP should already be available. Verify by:
+
+```python
+import onnxruntime as ort
+ort.get_available_providers()
+```
+
+Expected output should include `MIGraphXExecutionProvider` and `CPUExecutionProvider`.
+
+If not installed:
+
+```bash
+pip install onnxruntime
+```
+
+See more at [Install ONNX Runtime for Radeon GPUs](https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-6.1.3/docs/install/native_linux/install-onnx.html).
+
+!!! warning ""
+    ONNX Runtime support on Ubuntu is still facing issues. See [Known Issues](../appendix/known-issues.md) for details.
