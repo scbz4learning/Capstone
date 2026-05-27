@@ -1,0 +1,59 @@
+{
+    "os_type": "wsl",
+    "task_type": "vision_classification",
+    "backend": "pytorch",
+    "model": "/home/$USER/capstone/models/VGGT-1B",
+    "output_dir": "./profiling_logs/vggt",
+    "wsl": {
+        "distro": "Ubuntu-24.04",
+        "python_path": "/home/$USER/.venv/bin/python",
+        "model": "/home/$USER/capstone/models/VGGT-1B"
+    },
+    "execution": {
+        "device": [
+            "cuda",
+            "cpu"
+        ],
+        "dtype": [
+            "float32",
+            "bfloat16"
+        ],
+        "cpu_options": {
+            "cpu_acc": [
+                "none"
+            ]
+        },
+        "is_integrated": true,
+        "passes": {
+            "warmup": {
+                "num_warmup": 10
+            },
+            "end_to_end": {
+                "num_test": 20
+            },
+            "power": {
+                "num_test": 10
+            }
+        }
+    },
+    "inputs": {
+        "images": [],
+        "image_size": 392,
+        "num_images": 2
+    },
+    "target_metrics": {
+        "warmup": [
+            "warmup_latency"
+        ],
+        "end_to_end": [
+            "latency_ms",
+            "batch_throughput_img_per_sec",
+            "peak_mem"
+        ],
+        "power": [
+            "avg_power",
+            "energy_per_inference",
+            "img_per_sec_watt"
+        ]
+    }
+}
