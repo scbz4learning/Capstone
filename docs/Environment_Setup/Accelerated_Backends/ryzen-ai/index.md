@@ -31,4 +31,4 @@ On Windows, GPUs can be accessed via **DirectML (DML)** within the Ryzen AI stac
 ## NPU Specifics
 
 !!! note "X1 NPU on this device"
-    The XDNA 1 (X1) NPU on this experimental device is **difficult to support** with current tooling and version 1.7.1. For experimental NPU support and manual configuration, refer to the [Developer Guide](../../../appendix/developer-guide/index.md).
+    The XDNA 1 (X1) NPU on this experimental device is **difficult to support** with current tooling and version 1.7.1. For experimental NPU support and manual configuration, refer to the [Developer Guide](../../../Appendix/developer-guide/index.md).
