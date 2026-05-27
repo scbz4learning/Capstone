@@ -56,6 +56,9 @@ DEFAULT_CONFIG = {
     "execution": {
         "device": "cuda",
         "dtype": ["float16", "bfloat16"],
+        "gpu_options": {
+            "attn_implementation": ["sdpa"]
+        },
         "cpu_options": {
             "cpu_acc": ["none"]
         },
@@ -669,6 +672,8 @@ def get_valid_configs(config):
     device_cfg = config["execution"].get("device", "cuda")
     devices = device_cfg if isinstance(device_cfg, list) else [device_cfg]
     selected_dtypes = [dtype_map.get(d, torch.bfloat16) for d in config["execution"]["dtype"]]
+    gpu_options = config["execution"].get("gpu_options", {})
+    attn_impls = gpu_options.get("attn_implementation", ["sdpa"])
     cpu_options = config["execution"].get("cpu_options", {})
     cpu_accs = cpu_options.get("cpu_acc", ["none"])
     for dev in devices:
@@ -677,7 +682,8 @@ def get_valid_configs(config):
                 for acc in cpu_accs:
                     configs.append({"device": dev, "dtype": dt, "cpu_acc": acc})
             else:
-                configs.append({"device": dev, "dtype": dt})
+                for attn in attn_impls:
+                    configs.append({"device": dev, "dtype": dt, "attn": attn})
     return configs
 
 def profile_vggt(config, args):
@@ -718,10 +724,11 @@ def profile_vggt(config, args):
         dev_name = cfg["device"]
         dtype = cfg["dtype"]
         cpu_acc = cfg.get("cpu_acc", "none")
+        attn = cfg.get("attn", "sdpa")
         if dev_name == "cpu":
             run_name = f"{dev_name}_{str(dtype).split('.')[-1]}_{cpu_acc}"
         else:
-            run_name = f"{dev_name}_{str(dtype).split('.')[-1]}"
+            run_name = f"{dev_name}_{str(dtype).split('.')[-1]}_{attn}"
 
         print(f"\n{'=' * 45}")
         print(f"  Profiling Config: {run_name}")
@@ -729,7 +736,8 @@ def profile_vggt(config, args):
 
         try:
             device = torch.device(dev_name)
-            model = VGGT.from_pretrained(MODEL_ID).to(device=device, dtype=dtype).eval()
+            fused_attn = attn == "sdpa"
+            model = VGGT.from_pretrained(MODEL_ID, fused_attn=fused_attn).to(device=device, dtype=dtype).eval()
 
             if image_paths:
                 images = load_and_preprocess_images(image_paths).to(device=device)
