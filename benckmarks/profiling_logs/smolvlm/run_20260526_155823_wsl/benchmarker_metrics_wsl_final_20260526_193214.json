@@ -1,0 +1,134 @@
+[
+    {
+        "config": "cpu_bfloat16_none",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "Waiting_for_Host_WSL",
+        "latency": {
+            "ttft_ms_mean": 128283.03039745006,
+            "ttft_ms_p50": 128450.1764910001,
+            "ttft_ms_p95": 129015.0365423504,
+            "tpot_ms_mean": 287.9760549441402,
+            "tpot_ms_p50": 287.9563291054694,
+            "tpot_ms_p95": 288.3165233839847
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 45.25927631904,
+            "avg_idle_w": 7.02,
+            "energy_per_inference_j": 19624.26381177702,
+            "tokens_per_joule_p50": 0.006522537672123219,
+            "raw_energy_j": 196242.63811777017,
+            "measurement_mode": "RAPL_Windows_WSL",
+            "note": "Integrated from Host (dur: 3754.03s, idle: 7.02W)"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 0.18779754638671875,
+            "peak_mem_reserved_gb": 0.18779754638671875,
+            "cpu_rss_mb": 6066.3203125,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 3787.6,
+            "latency": {
+                "total_s": 3302.9,
+                "per_iter_median_s": 165.29,
+                "per_iter_p95_s": 165.95,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T18:59:04.329386",
+        "wsl_pwr_start_epoch": 1779782190.2960937,
+        "wsl_pwr_end_epoch": 1779785944.3252752
+    },
+    {
+        "config": "cuda_bfloat16_eager",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "Waiting_for_Host_WSL",
+        "latency": {
+            "ttft_ms_mean": 12407.010573849766,
+            "ttft_ms_p50": 12382.095332500285,
+            "ttft_ms_p95": 12551.269945999593,
+            "tpot_ms_mean": 119.51999732617226,
+            "tpot_ms_p50": 119.4888949687467,
+            "tpot_ms_p95": 119.94883685585336
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 45.62609282682185,
+            "avg_idle_w": 7.02,
+            "energy_per_inference_j": 1454.517316000542,
+            "tokens_per_joule_p50": 0.08800170241490085,
+            "raw_energy_j": 14545.173160005419,
+            "measurement_mode": "RAPL_Windows_WSL",
+            "note": "Integrated from Host (dur: 276.30s, idle: 7.02W)"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 7.849050045013428,
+            "peak_mem_reserved_gb": 10.6171875,
+            "cuda_allocated_mb": 4425.923828125,
+            "cuda_reserved_mb": 10872.0,
+            "cuda_peak_allocated_mb": 8037.42724609375,
+            "cuda_peak_reserved_mb": 10872.0,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 277.8,
+            "latency": {
+                "total_s": 554.1,
+                "per_iter_median_s": 27.68,
+                "per_iter_p95_s": 27.89,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T19:17:50.431269",
+        "wsl_pwr_start_epoch": 1779786794.1249685,
+        "wsl_pwr_end_epoch": 1779787070.4284472
+    },
+    {
+        "config": "cuda_bfloat16_sdpa",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "Waiting_for_Host_WSL",
+        "latency": {
+            "ttft_ms_mean": 7272.628913300103,
+            "ttft_ms_p50": 7273.360925501038,
+            "ttft_ms_p95": 7291.033595750014,
+            "tpot_ms_mean": 105.87909048828124,
+            "tpot_ms_p50": 105.88121318359356,
+            "tpot_ms_p95": 105.94426172929516
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 45.48700395061959,
+            "avg_idle_w": 7.02,
+            "energy_per_inference_j": 1091.4030652385804,
+            "tokens_per_joule_p50": 0.11728022769664774,
+            "raw_energy_j": 10914.030652385805,
+            "measurement_mode": "RAPL_Windows_WSL",
+            "note": "Integrated from Host (dur: 207.87s, idle: 7.02W)"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 5.091893196105957,
+            "peak_mem_reserved_gb": 5.541015625,
+            "cuda_allocated_mb": 4425.25634765625,
+            "cuda_reserved_mb": 5674.0,
+            "cuda_peak_allocated_mb": 5214.0986328125,
+            "cuda_peak_reserved_mb": 5674.0,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 208.4,
+            "latency": {
+                "total_s": 416.5,
+                "per_iter_median_s": 20.83,
+                "per_iter_p95_s": 20.85,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T19:31:58.790593",
+        "wsl_pwr_start_epoch": 1779787710.9151378,
+        "wsl_pwr_end_epoch": 1779787918.7898314
+    }
+]

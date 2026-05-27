@@ -1,0 +1,125 @@
+[
+    {
+        "config": "cpu_bfloat16_none",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "ttft_ms_mean": 153479.11972500006,
+            "ttft_ms_p50": 152514.6324999987,
+            "ttft_ms_p95": 157385.42214999962,
+            "tpot_ms_mean": 177.81029742187826,
+            "tpot_ms_p50": 177.74513125002045,
+            "tpot_ms_p95": 178.68114859376334
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 50.65174361607608,
+            "avg_idle_w": 2.26,
+            "energy_per_inference_j": 10026.41831516659,
+            "tokens_per_joule_p50": 0.012766273655905536,
+            "raw_energy_j": 100264.1831516659,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 0.1,
+            "peak_mem_reserved_gb": 0.1,
+            "cpu_rss_mb": 5186.96484375,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 1762.2,
+            "latency": {
+                "total_s": 3525.0,
+                "per_iter_median_s": 175.28,
+                "per_iter_p95_s": 180.15,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T13:10:31.594928"
+    },
+    {
+        "config": "cuda_bfloat16_eager",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "ttft_ms_mean": 12153.368860000046,
+            "ttft_ms_p50": 12146.044050001365,
+            "ttft_ms_p95": 12162.03745999519,
+            "tpot_ms_mean": 121.88409667968187,
+            "tpot_ms_p50": 121.88779609374478,
+            "tpot_ms_p95": 122.35839207028505
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 41.99096904927924,
+            "avg_idle_w": 2.17,
+            "energy_per_inference_j": 1224.4017567396313,
+            "tokens_per_joule_p50": 0.10454084968061604,
+            "raw_energy_j": 12244.017567396313,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 7.849050045013428,
+            "peak_mem_reserved_gb": 10.6171875,
+            "cuda_allocated_mb": 4425.923828125,
+            "cuda_reserved_mb": 10872.0,
+            "cuda_peak_allocated_mb": 8037.42724609375,
+            "cuda_peak_reserved_mb": 10872.0,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 277.1,
+            "latency": {
+                "total_s": 555.1,
+                "per_iter_median_s": 27.75,
+                "per_iter_p95_s": 27.85,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T13:29:26.486125"
+    },
+    {
+        "config": "cuda_bfloat16_sdpa",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "ttft_ms_mean": 6954.418449999503,
+            "ttft_ms_p50": 6952.996650001296,
+            "ttft_ms_p95": 6969.8328199971,
+            "tpot_ms_mean": 106.98704488280555,
+            "tpot_ms_p50": 107.04811132811187,
+            "tpot_ms_p95": 107.48602906252245
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 42.748310938478056,
+            "avg_idle_w": 2.39,
+            "energy_per_inference_j": 936.3680519814307,
+            "tokens_per_joule_p50": 0.13669838449650396,
+            "raw_energy_j": 9363.680519814307,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 5.091893196105957,
+            "peak_mem_reserved_gb": 5.541015625,
+            "cuda_allocated_mb": 4425.25634765625,
+            "cuda_reserved_mb": 5674.0,
+            "cuda_peak_allocated_mb": 5214.0986328125,
+            "cuda_peak_reserved_mb": 5674.0,
+            "model_params_mb": 4284.425506591797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 206.1,
+            "latency": {
+                "total_s": 413.0,
+                "per_iter_median_s": 20.66,
+                "per_iter_p95_s": 20.71,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-26T13:43:36.780382"
+    }
+]
