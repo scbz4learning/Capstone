@@ -11,6 +11,9 @@
     "execution": {
         "device": ["cuda","cpu"],
         "dtype": ["float32","bfloat16"],
+        "gpu_options": {
+            "attn_implementation": ["eager", "sdpa"]
+        },
         "is_integrated": true,
         "passes": {
             "warmup": {
