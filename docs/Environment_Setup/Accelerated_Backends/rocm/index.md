@@ -139,6 +139,7 @@ Supports Python 3.10-3.12 for Torch 2.9 & 2.10.
 Workaround: `$env:HIP_VISIBLE_DEVICES = "0"`
 
 Related issues:
+
 - [AMD iGPU is cuda:0](https://github.com/ROCm/TheRock/issues/3392)
 - [gfx1103 support on Windows](https://github.com/ROCm/TheRock/issues/3031)
 - [Hangs on Radeon 780M](https://github.com/ROCm/TheRock/issues/1264)

@@ -70,19 +70,19 @@ nav = [
     { "SmoLVLM" = [
         { "Overview" = "smolvlm/index.md" },
         { "PyTorch" = "smolvlm/0.pytorch.md" }
-    ]},
+    ] },
     { "VGGT" = [
         { "Overview" = "vggt/index.md" },
         { "PyTorch" = "vggt/0.pytorch.md" }
-    ]},
-    { "Profiling & Benchmarking" = "profiling/index.md" },
+    ] },
+    { "Profiling & Benchmarking" = ["profiling/index.md"] },
     { "Appendix" = [
         { "Known Issues" = "appendix/known-issues.md" },
         { "Developer Guide" = [
             { "Overview" = "appendix/developer-guide/index.md" },
             { "IREE" = "appendix/developer-guide/iree.md" }
-        ]}
-    ]}
+        ] }
+    ] }
 ]
 
 # With the "extra_css" option you can add your own CSS styling to customize

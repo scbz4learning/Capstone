@@ -7,6 +7,7 @@ SmolVLM is a compact vision-language model (2B params) developed by Hugging Face
 SmolVLM's backbone is **SmolLM2 1.7B**, a pure text transformer. Images are **not processed inside the backbone**: the vision encoder (SigLIP) converts each 384×384 image patch into **81 visual tokens**, which are concatenated with text tokens and fed into the backbone.
 
 This means:
+
 - Frameworks that only support text-only SmolLM **can be adapted** for VLM with manual image preprocessing
 - But **full end-to-end VLM support** (image encoding + generation) is currently only available in **PyTorch**
 

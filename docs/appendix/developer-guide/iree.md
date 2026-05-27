@@ -23,6 +23,7 @@ IREE (Intermediate Representation Execution Environment) is an MLIR-based compil
 ### Backend Capabilities Detail
 
 **ROCm (HIP) Backend**:
+
 - ✅ Driver and device discovery works correctly
 - ✅ Can compile and run simple operators and small models
 - ✅ Successfully compiles text decoder modules to GPU code
@@ -31,6 +32,7 @@ IREE (Intermediate Representation Execution Environment) is an MLIR-based compil
 - ❌ Autoregressive generation requires external implementation
 
 **Vulkan SPIR-V Backend**:
+
 - ✅ Driver and device discovery works
 - ✅ Can compile basic MLIR operations
 - ❌ `online_attention` ops cannot be lowered to SPIR-V (workgroup memory type mismatch)
@@ -90,6 +92,7 @@ When exporting VLM models to IREE, the following issues occur across all backend
 model = TransformerModel.from_pretrained("...").to("cuda")
 output = model.generate(**inputs, max_new_tokens=20)
 ```
+
 - ✅ Works for all models and use cases
 - ✅ Best debugging and flexibility
 - ❌ No IREE compilation benefits
@@ -103,12 +106,14 @@ iree-compile decoder.mlir --iree-hal-target-backends=rocm --iree-rocm-target=gfx
 
 # Implement generation loop manually in application
 ```
+
 - ✅ Single-step inference on GPU
 - ❌ Requires manual generation loop implementation
 - ❌ Cannot handle multimodal or complex architectures
 
 ### Option 3: amdsharktank Paged LLM
 https://github.com/nod-ai/amd-shark-ai provides specialized LLaMA export:
+
 - ✅ Works for pure text models (LLaMA, Qwen)
 - ❌ Multimodal models not supported
 

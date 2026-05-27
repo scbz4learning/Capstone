@@ -15,13 +15,12 @@ This section contains comprehensive profiling and benchmarking results for both 
 For each model, we tested multiple configurations:
 
 - **SmoLVLM**:
-  - CPU (BFloat16)
-  - iGPU (Eager attention, BFloat16)
-  - iGPU (SDPA attention, BFloat16)
-
+    - CPU (BFloat16)
+    - iGPU (Eager attention, BFloat16)
+    - iGPU (SDPA attention, BFloat16)
 - **VGGT**:
-  - CPU (Float32)
-  - GPU (Float32)
+    - CPU (Float32)
+    - GPU (Float32)
 
 ---
 
@@ -84,11 +83,13 @@ For each model, we tested multiple configurations:
 ### Model-Specific Insights
 
 **SmoLVLM**:
+
 - Strongly benefits from GPU acceleration (20-30x speedup vs CPU)
 - SDPA attention provides better latency characteristics
 - iGPU (GPU) SDPA configuration is optimal for most scenarios
 
 **VGGT**:
+
 - Significant speedup with GPU (4-5x vs CPU)
 - More balanced memory consumption than SmoLVLM
 - Suitable for both mobile and server deployment depending on configuration

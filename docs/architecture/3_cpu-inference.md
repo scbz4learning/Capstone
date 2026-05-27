@@ -11,6 +11,7 @@ In production environments, CPU inference is typically reserved for scenarios wh
 ### Performance Limitations
 
 Compared to hardware-accelerated paths, CPU inference is significantly slower. Based on our profiling data for models like `smolvlm`:
+
 - **CPU (Bfloat16)**: TTFT ~128s, TPOT ~288ms
 - **integrated GPU (CUDA/ROCm)**: TTFT ~7s, TPOT ~105ms
 

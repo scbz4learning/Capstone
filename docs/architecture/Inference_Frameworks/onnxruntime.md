@@ -9,6 +9,7 @@ ONNX Runtime offers potential optimizations (graph optimization, quantization) f
 ### 1. Vision Encoder Becomes the Bottleneck
 
 **The Problem:**
+
 - ONNX Runtime can optimize the decoder (LLM) component, showing measurable speedup in token generation
 - However, the vision encoder (for multimodal models) rarely has optimized backends available on AMD platforms
 - This results in the vision encoder running on CPU via OpenVINO or similar, which is significantly slower than GPU acceleration
@@ -30,6 +31,7 @@ For ONNX Runtime to provide overall speedup on VLMs, all components (vision enco
 
 **The Root Cause:**
 MIGraphX (AMD's graph inference engine) suffers from version mismatches between:
+
 - AMD's apt repositories providing pre-built MIGraphX binaries
 - Your system's installed ROCm runtime version
 - The ONNX Runtime Python bindings that depend on MIGraphX
@@ -63,14 +65,17 @@ Export from Hugging Face may produce ONNX graphs with issues:
 Ryzen AI NPU accesses ONNX Runtime via `onnxruntime-vitisai` (OGA + VitisAI ExecutionProvider). Critical limitation:
 
 **Model Support:**
+
 - AMD only provides OGA-optimized models for **text-only LLMs** (SmolLM, Llama, Qwen)
 - No pre-optimized OGA models exist for **multi-modal VLMs** (SmolVLM, LLaVA, etc.)
 
 **Operator Coverage:**
+
 - Complex vision connectors (e.g., PerceiverResampler for cross-attention) are not in the VitisAI-supported operator list
 - Even if individual ops like Conv2d are supported, a full vision encoder + connector as a single ONNX model cannot be compiled
 
 **Why Not Custom Export?**
+
 - Converting a custom ONNX VLM to OGA format requires AMD Quark (proprietary tool), not publicly available
 - Manual decomposition (vision encoder on iGPU, decoder on NPU) fails because `onnxruntime-rocm` and `onnxruntime-vitisai` Python modules cannot coexist in the same process
 
@@ -91,6 +96,7 @@ onnxruntime-migraphx  (AMD apt repos)     → Declared: MIGraphX, CPU
 ```
 
 **Impact:**
+
 - `pip install` order determines which package's `onnxruntime` is active
 - `get_available_providers()` returns only the final installed package's providers
 - Switching between providers requires uninstalling/reinstalling packages, which is error-prone
