@@ -81,3 +81,4 @@ Makefile
 **/cache_static
 **/__pycache__/
 **/logs
+**/models
