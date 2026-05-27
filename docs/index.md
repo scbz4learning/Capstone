@@ -40,7 +40,7 @@ The experiments are conducted on a compact edge device:
 
 ## Document Structure
 
-This documentation is organized in two parts:
+This documentation is organized as follows:
 
 1. **Architecture & Framework Selection** → [`docs/architecture/`](architecture/)    
     - General overview of the AMD software stack (ROCm, Ryzen AI, Vulkan, ONNX Runtime, IREE, ...)  
@@ -49,5 +49,10 @@ This documentation is organized in two parts:
 2. **Hands-on Guides (SmolVLM & VGGT)** → [`docs/smolvlm/`](smolvlm/) and [`docs/vggt/`](vggt/)    
     - Step-by-step environment setup for Ubuntu and Windows  
     - Model introductions and example inference code  
-    - Verified benchmarks and profiling results  
-    - Known issues and workarounds (NPU VLM unsupported, limited LLM support)    
+    - Known issues and workarounds (NPU VLM unsupported, limited LLM support)
+
+3. **Profiling & Benchmarking** → [`docs/profiling/`](profiling/)
+    - Comprehensive performance profiling results across platforms (Windows, WSL, Ubuntu)
+    - Detailed latency, throughput, power consumption, and memory usage metrics
+    - Platform comparison and recommendations
+    - Performance optimization insights    

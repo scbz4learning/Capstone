@@ -46,6 +46,45 @@ Copyright &copy; 2026 The authors
 # Read more: https://zensical.org/docs/setup/navigation/
 
 
+nav = [
+    { "Accelerating Robotics Perception on AMD Ryzen AI APU" = "index.md" },
+    { "Architecture" = [
+        { "Overview" = "Architecture/index.md" },
+        { "NPU Inference" = "Architecture/1_npu-inference.md" },
+        { "GPU Inference" = "Architecture/2_gpu-inference.md" },
+        { "CPU Inference" = "Architecture/3_cpu-inference.md" },
+        { "Inference Frameworks" = [
+            { "PyTorch" = "Architecture/Inference_Frameworks/pytorch.md" },
+            { "ONNX Runtime" = "Architecture/Inference_Frameworks/onnxruntime.md" }
+        ]}
+    ]},
+    { "Environment Setup" = [
+        { "Prerequisite" = "Environment_Setup/Prerequisite/index.md" },
+        { "Drivers" = "Environment_Setup/Drivers/index.md" },
+        { "Accelerated Backends" = [
+            { "ROCm" = "Environment_Setup/Accelerated_Backends/rocm/index.md" },
+            { "Vulkan" = "Environment_Setup/Accelerated_Backends/vulkan/index.md" },
+            { "Ryzen AI" = "Environment_Setup/Accelerated_Backends/ryzen-ai/index.md" }
+        ]}
+    ]},
+    { "SmoLVLM" = [
+        { "Overview" = "smolvlm/index.md" },
+        { "PyTorch" = "smolvlm/0.pytorch.md" }
+    ]},
+    { "VGGT" = [
+        { "Overview" = "vggt/index.md" },
+        { "PyTorch" = "vggt/0.pytorch.md" }
+    ]},
+    { "Profiling & Benchmarking" = "profiling/index.md" },
+    { "Appendix" = [
+        { "Known Issues" = "appendix/known-issues.md" },
+        { "Developer Guide" = [
+            { "Overview" = "appendix/developer-guide/index.md" },
+            { "IREE" = "appendix/developer-guide/iree.md" }
+        ]}
+    ]}
+]
+
 # With the "extra_css" option you can add your own CSS styling to customize
 # your Zensical project according to your needs. You can add any number of
 # CSS files.
