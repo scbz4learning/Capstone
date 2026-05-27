@@ -1,0 +1,48 @@
+{
+    "os_type": "wsl", 
+    "task_type": "vision_autoregressive",
+    "backend": "pytorch",
+    "model": "HuggingFaceTB/SmolVLM-Instruct",
+    "wsl": {
+        "distro": "Ubuntu-24.04", 
+        "python_path": "/home/user/.venv/bin/python"
+    },
+    "output_dir": "./profiling_logs/smolvlm",
+    "execution": {
+        "device": ["cpu","cuda"],
+        "dtype": ["bfloat16"],
+        "gpu_options": {
+            "attn_implementation": ["eager","sdpa"]
+        },
+        "is_integrated": true,
+        "sampling_randomness": false,
+        "temperature": null,
+        "passes": {
+            "warmup": {
+                "num_warmup": 10
+            },
+            "end_to_end": {
+                "num_test": 20
+            },
+            "power": {
+                "num_test": 10
+            }
+        }
+    },
+    "inputs": {
+        "prompt": "Describe the images briefly.",
+        "prompt_size": 64,
+        "images": [],
+        "image_size": 384,
+        "num_images": 2
+    },
+    "output": {
+        "output_tokens": 128
+    },
+    "target_metrics": {
+        "warmup": ["warmup_latency"],
+        "end_to_end": ["TTFT", "TPOT", "Total_latency", "tokens/sec", "peak_mem"],
+        "power": ["avg_power", "energy_per_inference", "fps_watt"],
+	"bandwidth_analysis": false
+    }
+}
