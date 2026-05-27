@@ -35,7 +35,6 @@ VGGT imposes a strict constraint: the **short edge of input images must be a mul
 
 - No automated tooling exists to convert VGGT to a working ONNX format
 - Community-provided exports (e.g. [akretz/vggt-onnx](https://github.com/akretz/vggt-onnx)) have **fixed dimensions** that are difficult to modify and suffer from low efficiency
-- See [ONNX page](1.onnxruntime.md) for attempted approaches
 
 ## Citation
 

@@ -92,7 +92,7 @@ Before Dec 2025, ROCm required `export HSA_OVERRIDE_GFX_VERSION=11.0.0`. This is
 
 ### Prerequisites
 
-1. Install latest [Adrenalin driver](../../GPU%20Driver/index.md)
+1. Install latest [Adrenalin driver](../../Drivers/index.md)
 2. Read [TheRock release guidance](https://github.com/ROCm/TheRock/blob/main/RELEASES.md)
 
 ### ROCm Installation Paths

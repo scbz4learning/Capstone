@@ -82,6 +82,6 @@ Vulkan is a modern cross-platform graphics and compute API that provides high-ef
 
 Vulkan is a first-class citizen in the **llama.cpp** ecosystem. It allows models to be offloaded to the GPU using the Vulkan backend, which is particularly useful for integrated GPUs (iGPUs) or older hardware. On Linux, the **RADV** driver is often used to execute Vulkan-based inference with excellent performance.
 
-!!! info "[WIP] Ongoing Testing"
+!!! info "WIP: Ongoing Testing"
     Vulkan-based inference is currently under active testing. Performance benchmarks and detailed configuration guides for different hardware platforms will be updated soon.
 

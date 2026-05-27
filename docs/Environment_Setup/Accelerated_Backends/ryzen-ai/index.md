@@ -1,6 +1,6 @@
 # Ryzen AI
 
-Ryzen AI is the official software stack for NPU (Neural Processing Unit) acceleration on AMD hardware. While the installation process has matured significantly, currently it is only recommended for users who **specifically require NPU functionality**. For a broader comparison, see [NPU Inference](../../../architecture/1_npu-inference.md).
+Ryzen AI is the official software stack for NPU (Neural Processing Unit) acceleration on AMD hardware. While the installation process has matured significantly, currently it is only recommended for users who **specifically require NPU functionality**. For a broader comparison, see [NPU Inference](../../../Architecture/1_npu-inference.md).
 
 !!! tip "Official Documentation"
     For detailed installation steps and the most up-to-date hardware/software requirements, we highly recommend following the official guides:
@@ -31,4 +31,4 @@ On Windows, GPUs can be accessed via **DirectML (DML)** within the Ryzen AI stac
 ## NPU Specifics
 
 !!! note "X1 NPU on this device"
-    The XDNA 1 (X1) NPU on this experimental device is **difficult to support** with current tooling and version 1.7.1. For experimental NPU support and manual configuration, refer to the [Developer Guide](../../../appendix/developer-guide.md).
+    The XDNA 1 (X1) NPU on this experimental device is **difficult to support** with current tooling and version 1.7.1. For experimental NPU support and manual configuration, refer to the [Developer Guide](../../../appendix/developer-guide/index.md).

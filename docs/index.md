@@ -18,7 +18,7 @@ This project explores the capabilities and limitations of **AMD Ryzen AI APU** f
     
     - **VLM (Vision-Language Models): ❌ Not supported** — only Gemma-3-4b-it has experimental VLM support on X2 NPU (Ryzen AI 300 series), none on X1.
     - **LLM: ⚠️ Limited** — only a small subset of models (e.g. SmolLM2-135M, Qwen-2.5-14b, Phi-4-mini, GPT-OSS-20b) are officially supported. SmolVLM and VGGT are **not** in the supported list.
-    - See [AMD Ryzen AI Release Notes](https://ryzenai.docs.amd.com/en/latest/relnotes.html#model-compatibility-table) for the full compatibility matrix, and [`docs/architecture/framework-selection.md`](architecture/framework-selection.md) for detailed model support tables.
+    - See [AMD Ryzen AI Release Notes](https://ryzenai.docs.amd.com/en/latest/relnotes.html) for the full compatibility matrix, and the [Architecture Overview](Architecture/index.md) for framework selection guidance.
 
 We focus on two models:
 
