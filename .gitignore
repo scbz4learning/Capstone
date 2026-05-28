@@ -82,3 +82,4 @@ Makefile
 **/__pycache__/
 **/logs
 **/models
+third-party/llama-cpp
