@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 import torch
@@ -749,29 +749,31 @@ def profile_vggt(config, args):
                 images = ((images - mean) / std)
 
             latency_list = []
-            amp_enabled = dev_name == "cuda" or (dev_name == "cpu" and dtype == torch.bfloat16)
 
             print(f"Warmup: {NUM_WARMUP} iterations...")
             with torch.no_grad():
-                with torch.amp.autocast(dev_name, dtype=dtype, enabled=amp_enabled):
-                    for _ in range(NUM_WARMUP):
-                        _ = model(images)
+                for i in range(NUM_WARMUP):
+                    print(f"  Warmup {i+1}/{NUM_WARMUP}...", end="\r", flush=True)
+                    _ = model(images)
 
+            print()
+
+            with torch.no_grad():
                 cpu_mem_start = get_cpu_mem_gb()
                 if dev_name == "cuda":
                     torch.cuda.reset_peak_memory_stats()
 
                 print(f"Latency: {NUM_TEST_LATENCY} iterations...")
-                with torch.amp.autocast(dev_name, dtype=dtype, enabled=amp_enabled):
-                    for i in range(NUM_TEST_LATENCY):
-                        if dev_name == "cuda":
-                            torch.cuda.synchronize()
-                        t0 = time.perf_counter()
-                        _ = model(images)
-                        if dev_name == "cuda":
-                            torch.cuda.synchronize()
-                        latency_ms = (time.perf_counter() - t0) * 1000
-                        latency_list.append(latency_ms)
+                for i in range(NUM_TEST_LATENCY):
+                    print(f"  Latency run {i+1}/{NUM_TEST_LATENCY}...", end="\r", flush=True)
+                    if dev_name == "cuda":
+                        torch.cuda.synchronize()
+                    t0 = time.perf_counter()
+                    _ = model(images)
+                    if dev_name == "cuda":
+                        torch.cuda.synchronize()
+                    latency_ms = (time.perf_counter() - t0) * 1000
+                    latency_list.append(latency_ms)
 
             if dev_name == "cuda":
                 peak_mem_allocated_gb = torch.cuda.max_memory_allocated() / (1024**3)
@@ -790,9 +792,10 @@ def profile_vggt(config, args):
                     torch.cuda.synchronize()
                 t_pwr_start = time.time()
                 with torch.no_grad():
-                    with torch.amp.autocast(dev_name, dtype=dtype, enabled=amp_enabled):
-                        for _ in range(NUM_TEST_POWER):
-                            _ = model(images)
+                    for i in range(NUM_TEST_POWER):
+                        print(f"  Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
+                        _ = model(images)
+                print()
                 if dev_name == "cuda":
                     torch.cuda.synchronize()
                 t_pwr_end = time.time()
@@ -816,11 +819,12 @@ def profile_vggt(config, args):
                 t_pwr_start = time.time()
 
                 with torch.no_grad():
-                    with torch.amp.autocast(dev_name, dtype=dtype, enabled=amp_enabled):
-                        for _ in range(NUM_TEST_POWER):
-                            _ = model(images)
-                            if dev_name == "cuda":
-                                torch.cuda.synchronize()
+                    for i in range(NUM_TEST_POWER):
+                        print(f"  Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
+                        _ = model(images)
+                        if dev_name == "cuda":
+                            torch.cuda.synchronize()
+                print()
 
                 if dev_name == "cuda":
                     torch.cuda.synchronize()

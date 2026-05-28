@@ -1,4 +1,4 @@
-﻿import torch
+import torch
 import time
 import json
 import os
@@ -799,11 +799,13 @@ def profile_smolvlm(config, args):
             t_warmup_0 = time.perf_counter()
             print(f"Warmup: {NUM_WARMUP} iterations...")
             with torch.no_grad():
-                for _ in range(NUM_WARMUP):
+                for i in range(NUM_WARMUP):
+                    print(f"  Warmup {i+1}/{NUM_WARMUP}...", end="\r", flush=True)
                     wk = dict(max_new_tokens=MAX_NEW_TOKENS, min_new_tokens=MAX_NEW_TOKENS, use_cache=True, do_sample=DO_SAMPLE)
                     if EFFECTIVE_TEMPERATURE is not None:
                         wk["temperature"] = EFFECTIVE_TEMPERATURE
                     _ = model.generate(**inputs, **wk)
+            print()
             t_warmup_1 = time.perf_counter()
             sanity["warmup_duration_s"] = round(t_warmup_1 - t_warmup_0, 1)
 
@@ -818,6 +820,7 @@ def profile_smolvlm(config, args):
             print(f"Latency: {NUM_TEST_LATENCY} iterations...")
             with torch.no_grad():
                 for i in range(NUM_TEST_LATENCY):
+                    print(f"  Latency run {i+1}/{NUM_TEST_LATENCY}...", end="\r", flush=True)
                     streamer = TextIteratorStreamer(processor.tokenizer, skip_prompt=True)
                     gen_kwargs = dict(
                         **inputs,
@@ -881,11 +884,13 @@ def profile_smolvlm(config, args):
                     torch.cuda.synchronize()
                 t_pwr_start = time.time()
                 with torch.no_grad():
-                    for _ in range(NUM_TEST_POWER):
+                    for i in range(NUM_TEST_POWER):
+                        print(f"  Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
                         pk = dict(max_new_tokens=MAX_NEW_TOKENS, min_new_tokens=MAX_NEW_TOKENS, use_cache=True, do_sample=DO_SAMPLE)
                         if EFFECTIVE_TEMPERATURE is not None:
                             pk["temperature"] = EFFECTIVE_TEMPERATURE
                         _ = model.generate(**inputs, **pk)
+                print()
                 if dev_name == "cuda":
                     torch.cuda.synchronize()
                 t_pwr_end = time.time()
@@ -909,13 +914,15 @@ def profile_smolvlm(config, args):
                 t_pwr_start = time.time()
                 
                 with torch.no_grad():
-                    for _ in range(NUM_TEST_POWER):
+                    for i in range(NUM_TEST_POWER):
+                        print(f"  Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
                         pk = dict(max_new_tokens=MAX_NEW_TOKENS, min_new_tokens=MAX_NEW_TOKENS, use_cache=True, do_sample=DO_SAMPLE)
                         if EFFECTIVE_TEMPERATURE is not None:
                             pk["temperature"] = EFFECTIVE_TEMPERATURE
                         _ = model.generate(**inputs, **pk)
                         if dev_name == "cuda":
                             torch.cuda.synchronize()
+                print()
                         
                 if dev_name == "cuda":
                     torch.cuda.synchronize()
