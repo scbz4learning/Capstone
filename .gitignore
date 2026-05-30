@@ -83,3 +83,9 @@ Makefile
 **/logs
 **/models
 third-party/llama-cpp
+
+**/.venv*
+**/rocm-7.13.0
+**/vllm*
+**/vllm
+**/.kilo
