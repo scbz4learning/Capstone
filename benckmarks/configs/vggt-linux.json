@@ -2,11 +2,11 @@
     "os_type": "linux",
     "task_type": "vision_classification",
     "backend": "pytorch",
-    "model": "facebook/VGGT-1B",
+    "model": "/home/bokai/capstone/models/VGGT-1B",
     "output_dir": "./profiling_logs/vggt",
     "execution": {
-        "device": ["cuda", "cpu"],
-        "dtype": ["float32", "bfloat16"],
+        "device": ["cuda"],
+        "dtype": ["bfloat16"],
         "gpu_options": {
             "attn_implementation": ["eager", "sdpa"]
         },
@@ -19,7 +19,7 @@
                 "num_test": 20
             },
             "power": {
-                "num_test": 20
+                "num_test": 10
             }
         }
     },

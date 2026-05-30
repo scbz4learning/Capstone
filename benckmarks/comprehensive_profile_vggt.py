@@ -740,12 +740,12 @@ def profile_vggt(config, args):
             model = VGGT.from_pretrained(MODEL_ID, fused_attn=fused_attn).to(device=device, dtype=dtype).eval()
 
             if image_paths:
-                images = load_and_preprocess_images(image_paths).to(device=device)
+                images = load_and_preprocess_images(image_paths).to(device=device, dtype=dtype)
             else:
                 print("No image paths provided, using dummy tensor.")
-                images = torch.rand(num_images, 3, image_size, image_size).to(device)
-                mean = torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32).view(1, 3, 1, 1).to(device)
-                std = torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32).view(1, 3, 1, 1).to(device)
+                images = torch.rand(num_images, 3, image_size, image_size, device=device, dtype=dtype)
+                mean = torch.tensor([0.485, 0.456, 0.406], dtype=dtype).view(1, 3, 1, 1).to(device)
+                std = torch.tensor([0.229, 0.224, 0.225], dtype=dtype).view(1, 3, 1, 1).to(device)
                 images = ((images - mean) / std)
 
             latency_list = []
