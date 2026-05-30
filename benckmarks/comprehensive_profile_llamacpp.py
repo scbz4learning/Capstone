@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
     "os_type": "linux",
     "task_type": "vision_autoregressive",
     "backend": "llamacpp",
-    "model": "SmolVLM-256M-Instruct",
+    "model": "SmolVLM-Instruct",
     "output_dir": "./profiling_logs/llamacpp",
     "models_root": "../models",
     "llamacpp": {
@@ -554,22 +554,57 @@ def stop_llama_server(proc):
 
 
 def encode_images_to_base64(image_paths):
+    """Encode images to base64 strings for llama.cpp multimodal API.
+    
+    llama-server expects a flat array of base64 strings for multimodal_data,
+    and the prompt must contain media_marker placeholders (e.g., "<__media__>").
+    """
     encoded = []
-    for i, path in enumerate(image_paths):
+    for path in image_paths:
         with open(path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode("utf-8")
-            encoded.append({"data": b64, "id": i})
+            encoded.append(b64)
     return encoded
 
 
-def call_completion(port, prompt, image_data, n_predict, temperature=None):
+def get_media_marker(port):
+    """Get the dynamic media_marker from llama-server /props endpoint.
+    
+    llama-server generates a unique media_marker per session that must be
+    used in the prompt to indicate where image embeddings should be inserted.
+    """
+    url = f"http://127.0.0.1:{port}/props"
+    try:
+        resp = urllib.request.urlopen(url, timeout=10)
+        props = json.loads(resp.read().decode("utf-8"))
+        return props.get("media_marker", "")
+    except Exception as e:
+        print(f"[Warning] Failed to get media_marker: {e}")
+        return ""
+
+
+def call_completion(port, prompt, multimodal_data, n_predict, temperature=None):
+    """Call llama-server /completion endpoint with multimodal support.
+    
+    Args:
+        port: Server port
+        prompt: Text prompt containing media_marker placeholders (e.g., "<__media__> Describe...")
+        multimodal_data: List of base64-encoded image strings
+        n_predict: Max tokens to generate
+        temperature: Sampling temperature
+    
+    Returns:
+        (result_dict, success_bool)
+    """
     url = f"http://127.0.0.1:{port}/completion"
     body = {
         "prompt": prompt,
         "n_predict": n_predict,
-        "image_data": image_data,
+        "min_tokens": n_predict,  # Force minimum tokens to ensure full generation
+        "multimodal_data": multimodal_data,
         "temperature": temperature if temperature is not None else 0.0,
         "cache_prompt": False,
+        "ignore_eos": True,  # Prevent early stopping on EOS
     }
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
@@ -579,6 +614,16 @@ def call_completion(port, prompt, image_data, n_predict, temperature=None):
         return result, True
     except Exception as e:
         return {"error": str(e)}, False
+
+
+def build_multimodal_prompt(prompt_text, media_marker, num_images):
+    """Build a prompt with media_marker placeholders for llama.cpp multimodal API.
+    
+    llama-server requires the media_marker (obtained from /props) to be placed
+    in the prompt where image embeddings should be inserted.
+    """
+    placeholders = media_marker * num_images
+    return f"{placeholders} {prompt_text}"
 
 
 def extract_timings(completion_response):
@@ -767,6 +812,15 @@ def profile_llamacpp(config, args):
             if not wait_for_server_ready(port):
                 raise RuntimeError("llama-server failed to start")
 
+            # Get the dynamic media_marker from server for multimodal prompts
+            media_marker = get_media_marker(port)
+            if not media_marker:
+                raise RuntimeError("Failed to get media_marker from server - multimodal may not work")
+            print(f"  Media marker: {media_marker[:30]}...")
+
+            # Build multimodal prompt with correct media_marker placeholders
+            multimodal_prompt = build_multimodal_prompt(padded_prompt, media_marker, num_images)
+
             sanity = {}
 
             # === Warmup ===
@@ -774,7 +828,7 @@ def profile_llamacpp(config, args):
             print(f"  Warmup: {NUM_WARMUP} iterations...")
             for i in range(NUM_WARMUP):
                 print(f"    Warmup {i+1}/{NUM_WARMUP}...", end="\r", flush=True)
-                resp, ok = call_completion(port, padded_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
+                resp, ok = call_completion(port, multimodal_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
                 if not ok:
                     print(f"\n    Warmup {i+1}: FAILED - {resp.get('error', '')}")
             print()
@@ -782,14 +836,16 @@ def profile_llamacpp(config, args):
             sanity["warmup_duration_s"] = round(t_warmup_1 - t_warmup_0, 1)
 
             # === Memory baseline ===
-            cpu_mem_start = get_cpu_mem_gb()
+            # Note: We measure the llama-server subprocess memory, not the Python script
+            server_pid = server_proc.pid
+            server_proc_mem = psutil.Process(server_pid) if server_pid else None
 
             # === Latency ===
             ttft_list, tpot_list = [], []
             iter_timestamps = [time.perf_counter()]
             print(f"  Latency: {NUM_TEST_LATENCY} iterations...")
             for i in range(NUM_TEST_LATENCY):
-                resp, ok = call_completion(port, padded_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
+                resp, ok = call_completion(port, multimodal_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
                 if not ok:
                     print(f"    Run {i+1}/{NUM_TEST_LATENCY}: FAILED - {resp.get('error', '')}")
                     continue
@@ -797,7 +853,7 @@ def profile_llamacpp(config, args):
                 ttft_list.append(ttft_ms)
                 tpot_list.append(tpot_ms)
                 iter_timestamps.append(time.perf_counter())
-                print(f"    Run {i+1}/{NUM_TEST_LATENCY}: TTFT={ttft_ms:.0f}ms, TPOT={tpot_ms:.1f}ms/tok")
+                print(f"    Run {i+1}/{NUM_TEST_LATENCY}: TTFT={ttft_ms:.0f}ms, TPOT={tpot_ms:.1f}ms/tok, tokens={predicted_n}")
 
             per_iter_s = [(iter_timestamps[j+1] - iter_timestamps[j]) for j in range(len(iter_timestamps)-1)]
             median_iter_s = float(np.median(per_iter_s)) if per_iter_s else 0
@@ -810,10 +866,19 @@ def profile_llamacpp(config, args):
             }
 
             # === Memory ===
-            cpu_mem_end = get_cpu_mem_gb()
-            peak_mem_allocated_gb = max(cpu_mem_end - cpu_mem_start, 0.1)
+            # Measure llama-server subprocess memory (not the Python orchestrator)
+            if server_proc_mem:
+                try:
+                    mem_info = server_proc_mem.memory_info()
+                    cpu_rss_mb = mem_info.rss / (1024**2)
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    cpu_rss_mb = 0.0
+            else:
+                cpu_rss_mb = 0.0
+
+            peak_mem_allocated_gb = round(cpu_rss_mb / 1024, 2)
             peak_mem_reserved_gb = peak_mem_allocated_gb
-            mem_details = analyze_memory_details()
+            mem_details = {"cpu_rss_mb": round(cpu_rss_mb, 2)}
 
             # === Power ===
             is_integrated = config["execution"].get("is_integrated", True)
@@ -823,7 +888,7 @@ def profile_llamacpp(config, args):
                 t_pwr_start = time.time()
                 for i in range(NUM_TEST_POWER):
                     print(f"    Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
-                    call_completion(port, padded_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
+                    call_completion(port, multimodal_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
                 print()
                 t_pwr_end = time.time()
                 metrics_data = {
@@ -842,7 +907,7 @@ def profile_llamacpp(config, args):
                 t_pwr_start = time.time()
                 for i in range(NUM_TEST_POWER):
                     print(f"    Power run {i+1}/{NUM_TEST_POWER}...", end="\r", flush=True)
-                    call_completion(port, padded_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
+                    call_completion(port, multimodal_prompt, image_data, MAX_NEW_TOKENS, EFFECTIVE_TEMPERATURE)
                 print()
                 t_pwr_end = time.time()
                 metrics_data = monitor.stop(global_start_time=t_pwr_start, global_end_time=t_pwr_end)
