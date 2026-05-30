@@ -1,0 +1,94 @@
+[
+    {
+        "config": "vulkan_Q8_0",
+        "model": "SmolVLM-256M-Instruct",
+        "quant": "Q8_0",
+        "backend": "llamacpp",
+        "status": "ok",
+        "is_integrated": false,
+        "measurement_mode": "gpu_plus_cpu_separate",
+        "latency": {
+            "ttft_ms_mean": 19.520950000000003,
+            "ttft_ms_p50": 19.917,
+            "ttft_ms_p95": 20.6141,
+            "tpot_ms_mean": 3.525950390625,
+            "tpot_ms_p50": 3.52611328125,
+            "tpot_ms_p95": 3.547522265625
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 65.50538230666803,
+            "avg_idle_w": 1.69,
+            "energy_per_inference_j": 31.570640687195965,
+            "tokens_per_joule_p50": 4.054399822551358,
+            "raw_energy_j": 315.70640687195964,
+            "measurement_mode": "gpu_plus_cpu_separate",
+            "avg_gpu_w": 33.208431851017245,
+            "avg_cpu_w": 33.98407498554266,
+            "raw_gpu_energy_j": 156.03100987195964,
+            "raw_cpu_energy_j": 159.675397
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 0.13,
+            "peak_mem_reserved_gb": 0.13,
+            "cpu_rss_mb": 137.43
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 4.8,
+            "latency": {
+                "total_s": 9.4,
+                "per_iter_median_s": 0.47,
+                "per_iter_p95_s": 0.47,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-29T06:30:15.952336",
+        "hw_log_file": "/home/bokai/capstone/benckmarks/profiling_logs/llamacpp/run_20260529_062946/vulkan_Q8_0_power_hw_20260529_063001.csv"
+    },
+    {
+        "config": "vulkan_f16",
+        "model": "SmolVLM-256M-Instruct",
+        "quant": "f16",
+        "backend": "llamacpp",
+        "status": "ok",
+        "is_integrated": false,
+        "measurement_mode": "gpu_plus_cpu_separate",
+        "latency": {
+            "ttft_ms_mean": 20.57075,
+            "ttft_ms_p50": 20.451500000000003,
+            "ttft_ms_p95": 21.4126,
+            "tpot_ms_mean": 4.888264062500001,
+            "tpot_ms_p50": 4.884859375,
+            "tpot_ms_p95": 4.91502578125
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 47.36802503697027,
+            "avg_idle_w": 1.93,
+            "energy_per_inference_j": 31.88899333437116,
+            "tokens_per_joule_p50": 4.013924135448853,
+            "raw_energy_j": 318.8899333437116,
+            "measurement_mode": "gpu_plus_cpu_separate",
+            "avg_gpu_w": 24.320225263521483,
+            "avg_cpu_w": 24.97877161033662,
+            "raw_gpu_energy_j": 157.31506734371166,
+            "raw_cpu_energy_j": 161.574866
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 0.13,
+            "peak_mem_reserved_gb": 0.13,
+            "cpu_rss_mb": 137.63
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 6.5,
+            "latency": {
+                "total_s": 13.0,
+                "per_iter_median_s": 0.65,
+                "per_iter_p95_s": 0.65,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-29T06:30:52.981575",
+        "hw_log_file": "/home/bokai/capstone/benckmarks/profiling_logs/llamacpp/run_20260529_062946/vulkan_f16_power_hw_20260529_063036.csv"
+    }
+]

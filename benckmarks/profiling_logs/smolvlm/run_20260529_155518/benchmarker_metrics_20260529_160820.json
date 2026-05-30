@@ -1,0 +1,49 @@
+[
+    {
+        "config": "cuda_bfloat16_sdpa",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
+        "latency": {
+            "ttft_ms_mean": 6618.926988349813,
+            "ttft_ms_p50": 6621.10688050052,
+            "ttft_ms_p95": 6637.706878799963,
+            "tpot_ms_mean": 96.95460483593834,
+            "tpot_ms_p50": 96.96222542578425,
+            "tpot_ms_p95": 97.04013446171942
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 37.072154063674766,
+            "avg_idle_w": 2.03,
+            "energy_per_inference_j": 742.7215925,
+            "tokens_per_joule_p50": 0.1723391393121508,
+            "raw_energy_j": 7427.215925,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
+            "avg_cpu_w": 39.102355051427246,
+            "raw_gpu_energy_j": 0.0,
+            "raw_cpu_energy_j": 7427.215925
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 5.033054828643799,
+            "peak_mem_reserved_gb": 5.587890625,
+            "cuda_allocated_mb": 4426.896484375,
+            "cuda_reserved_mb": 5606.0,
+            "cuda_peak_allocated_mb": 5153.84814453125,
+            "cuda_peak_reserved_mb": 5722.0,
+            "model_params_mb": 4285.402069091797
+        },
+        "bandwidth_analysis": {},
+        "sanity": {
+            "warmup_duration_s": 191.1,
+            "latency": {
+                "total_s": 380.6,
+                "per_iter_median_s": 19.03,
+                "per_iter_p95_s": 19.04,
+                "iter_outliers": []
+            }
+        },
+        "timestamp": "2026-05-29T16:08:20.217887",
+        "hw_log_file": "./profiling_logs/smolvlm/run_20260529_155518/cuda_bfloat16_sdpa_power_hw_20260529_160500.csv"
+    }
+]
