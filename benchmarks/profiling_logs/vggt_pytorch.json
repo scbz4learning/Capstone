@@ -1,0 +1,385 @@
+[
+  {
+    "config": "cuda_bfloat16",
+    "status": "error",
+    "error_type": "RuntimeError",
+    "error_message": "expected scalar type Float but found BFloat16",
+    "timestamp": "2026-05-26T03:31:33.378829",
+    "_model": "VGGT-1B",
+    "_environment": "Windows"
+  },
+  {
+    "config": "cpu_float32_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_Windows",
+    "latency": {
+      "latency_ms_mean": 192306.41195000004,
+      "latency_ms_p50": 192406.73230000038,
+      "latency_ms_p95": 194208.370675,
+      "batch_throughput_img_per_sec": 0.010400069242205002
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 43.72908011408238,
+      "avg_idle_w": 2.41,
+      "energy_per_inference_j": 9040.9556106694,
+      "img_per_sec_watt": 0.00023782959108842073,
+      "raw_energy_j": 180819.112213388,
+      "measurement_mode": "RAPL_Windows"
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 6344.73828125,
+      "model_params_mb": 4793.31022644043
+    },
+    "timestamp": "2026-05-26T06:13:29.521908",
+    "_model": "VGGT-1B",
+    "_environment": "Windows"
+  },
+  {
+    "config": "cpu_bfloat16_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_Windows",
+    "latency": {
+      "latency_ms_mean": 39947.14480999992,
+      "latency_ms_p50": 39884.85579999906,
+      "latency_ms_p95": 40913.719949999904,
+      "batch_throughput_img_per_sec": 0.05006615640523431
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 50.42591207237718,
+      "avg_idle_w": 2.45,
+      "energy_per_inference_j": 2170.3483497732514,
+      "img_per_sec_watt": 0.0009928656586989145,
+      "raw_energy_j": 43406.96699546503,
+      "measurement_mode": "RAPL_Windows"
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 6811.6640625,
+      "model_params_mb": 2396.655113220215
+    },
+    "timestamp": "2026-05-26T06:47:38.652705",
+    "_model": "VGGT-1B",
+    "_environment": "Windows"
+  },
+  {
+    "config": "cuda_bfloat16",
+    "status": "error",
+    "error_type": "RuntimeError",
+    "error_message": "expected scalar type Float but found BFloat16",
+    "timestamp": "2026-05-26T06:54:31.891376",
+    "_model": "VGGT-1B",
+    "_environment": "WSL"
+  },
+  {
+    "config": "cpu_float32_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "Waiting_for_Host_WSL",
+    "latency": {
+      "latency_ms_mean": 327644.45068570005,
+      "latency_ms_p50": 327798.03694449994,
+      "latency_ms_p95": 330593.098125301,
+      "batch_throughput_img_per_sec": 0.0061041778544222705
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 43.05129630526899,
+      "avg_idle_w": 9.02,
+      "energy_per_inference_j": 17067.190634249266,
+      "img_per_sec_watt": 0,
+      "raw_energy_j": 170671.90634249264,
+      "measurement_mode": "RAPL_Windows_WSL",
+      "note": "Integrated from Host (dur: 3277.72s, idle: 9.02W)"
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 5400.98828125,
+      "model_params_mb": 4793.31022644043
+    },
+    "timestamp": "2026-05-26T10:33:15.093007",
+    "wsl_pwr_start_epoch": 1779752317.3572783,
+    "wsl_pwr_end_epoch": 1779755595.0783882,
+    "_model": "VGGT-1B",
+    "_environment": "WSL"
+  },
+  {
+    "config": "cpu_bfloat16_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "Waiting_for_Host_WSL",
+    "latency": {
+      "latency_ms_mean": 54331.89516930033,
+      "latency_ms_p50": 54299.11093000101,
+      "latency_ms_p95": 54558.92757075053,
+      "batch_throughput_img_per_sec": 0.0368107903059137
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 42.65131991619374,
+      "avg_idle_w": 9.02,
+      "energy_per_inference_j": 2808.291858439393,
+      "img_per_sec_watt": 0,
+      "raw_energy_j": 28082.918584393927,
+      "measurement_mode": "RAPL_Windows_WSL",
+      "note": "Integrated from Host (dur: 543.50s, idle: 9.02W)"
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 5000.3828125,
+      "model_params_mb": 2396.655113220215
+    },
+    "timestamp": "2026-05-26T11:09:53.268752",
+    "wsl_pwr_start_epoch": 1779757249.7426257,
+    "wsl_pwr_end_epoch": 1779757793.2445652,
+    "_model": "VGGT-1B",
+    "_environment": "WSL"
+  },
+  {
+    "config": "cuda_float32_eager",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 43262.84895519996,
+      "latency_ms_p50": 43332.75443649995,
+      "latency_ms_p95": 43584.54438819974,
+      "batch_throughput_img_per_sec": 0.04622904058100896
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 48.34471730257468,
+      "avg_idle_w": 2.09,
+      "energy_per_inference_j": 2166.6054634,
+      "img_per_sec_watt": 0.0009562376855298512,
+      "raw_energy_j": 43332.109268,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 50.43199432467133,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 43332.109268
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 5.1861982345581055,
+      "peak_mem_reserved_gb": 5.41796875,
+      "cuda_allocated_mb": 4841.8974609375,
+      "cuda_reserved_mb": 5548.0,
+      "cuda_peak_allocated_mb": 5310.6669921875,
+      "cuda_peak_reserved_mb": 5548.0,
+      "model_params_mb": 4793.31022644043
+    },
+    "timestamp": "2026-05-29T04:33:51.072036",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_035743/cuda_float32_eager_power_hw_20260529_041921.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cuda_float32_sdpa",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 45132.98608795005,
+      "latency_ms_p50": 45142.9311805,
+      "latency_ms_p95": 45302.3190492007,
+      "batch_throughput_img_per_sec": 0.04431348717105991
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 47.15881355307209,
+      "avg_idle_w": 2.06,
+      "energy_per_inference_j": 2221.3046351000003,
+      "img_per_sec_watt": 0.0009396650134378364,
+      "raw_energy_j": 44426.092702,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 49.21584296755348,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 44426.092702
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 5.186987400054932,
+      "peak_mem_reserved_gb": 5.625,
+      "cuda_allocated_mb": 4842.17578125,
+      "cuda_reserved_mb": 5760.0,
+      "cuda_peak_allocated_mb": 5311.47509765625,
+      "cuda_peak_reserved_mb": 5760.0,
+      "model_params_mb": 4793.31022644043
+    },
+    "timestamp": "2026-05-29T05:11:37.169395",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_035743/cuda_float32_sdpa_power_hw_20260529_045624.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cuda_bfloat16_eager",
+    "status": "error",
+    "error_type": "RuntimeError",
+    "error_message": "Input type (float) and bias type (c10::BFloat16) should be the same",
+    "timestamp": "2026-05-29T05:11:44.285353",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cuda_bfloat16_sdpa",
+    "status": "error",
+    "error_type": "RuntimeError",
+    "error_message": "Input type (float) and bias type (c10::BFloat16) should be the same",
+    "timestamp": "2026-05-29T05:11:50.042001",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cpu_float32_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 32687.52179545004,
+      "latency_ms_p50": 32675.278650000564,
+      "latency_ms_p95": 33202.248608849186,
+      "batch_throughput_img_per_sec": 0.0611854276538759
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 51.91844218631402,
+      "avg_idle_w": 1.8,
+      "energy_per_inference_j": 1755.93420465,
+      "img_per_sec_watt": 0.0011784912080818309,
+      "raw_energy_j": 35118.684093,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 53.721589394253385,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 35118.684093
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 6287.50390625,
+      "model_params_mb": 4793.31022644043
+    },
+    "timestamp": "2026-05-29T05:39:24.956372",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_035743/cpu_float32_none_power_hw_20260529_052821.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cpu_bfloat16_none",
+    "status": "error",
+    "error_type": "RuntimeError",
+    "error_message": "Input type (float) and bias type (c10::BFloat16) should be the same",
+    "timestamp": "2026-05-29T05:39:30.382343",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cuda_bfloat16_eager",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 30321.86657014995,
+      "latency_ms_p50": 30332.2306164996,
+      "latency_ms_p95": 30432.520745049987,
+      "batch_throughput_img_per_sec": 0.06595900009562339
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 50.14681927144784,
+      "avg_idle_w": 2.06,
+      "energy_per_inference_j": 1585.0955999,
+      "img_per_sec_watt": 0.0013153177221187896,
+      "raw_energy_j": 15850.955999,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 52.209780413901626,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 15850.955999
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 2.711522102355957,
+      "peak_mem_reserved_gb": 2.759765625,
+      "cuda_allocated_mb": 2446.3837890625,
+      "cuda_reserved_mb": 2826.0,
+      "cuda_peak_allocated_mb": 2776.5986328125,
+      "cuda_peak_reserved_mb": 2826.0,
+      "model_params_mb": 2396.655113220215
+    },
+    "timestamp": "2026-05-29T15:10:49.591878",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_145025/cuda_bfloat16_eager_power_hw_20260529_150535.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cuda_bfloat16_sdpa",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 30302.951768099865,
+      "latency_ms_p50": 30291.935065500184,
+      "latency_ms_p95": 30397.467592449266,
+      "batch_throughput_img_per_sec": 0.06600017104952179
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 50.171071779568706,
+      "avg_idle_w": 2.02,
+      "energy_per_inference_j": 1580.6073295,
+      "img_per_sec_watt": 0.0013155025138689425,
+      "raw_energy_j": 15806.073295,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 52.194753122034086,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 15806.073295
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 2.712496757507324,
+      "peak_mem_reserved_gb": 2.875,
+      "cuda_allocated_mb": 2447.8662109375,
+      "cuda_reserved_mb": 2944.0,
+      "cuda_peak_allocated_mb": 2777.5966796875,
+      "cuda_peak_reserved_mb": 2944.0,
+      "model_params_mb": 2396.655113220215
+    },
+    "timestamp": "2026-05-29T15:31:09.060480",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_145025/cuda_bfloat16_sdpa_power_hw_20260529_152556.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  },
+  {
+    "config": "cpu_bfloat16_none",
+    "status": "ok",
+    "is_integrated": true,
+    "measurement_mode": "RAPL_only_integrated_gpu",
+    "latency": {
+      "latency_ms_mean": 35774.5670401996,
+      "latency_ms_p50": 35737.396231000275,
+      "latency_ms_p95": 35981.43338629961,
+      "batch_throughput_img_per_sec": 0.0559056381521715
+    },
+    "power_energy": {
+      "avg_total_adjusted_w": 52.0651401262799,
+      "avg_idle_w": 1.6,
+      "energy_per_inference_j": 1917.3537728,
+      "img_per_sec_watt": 0.0010737633283340211,
+      "raw_energy_j": 19173.537728,
+      "measurement_mode": "RAPL_only_integrated_gpu",
+      "avg_gpu_w": 0.0,
+      "avg_cpu_w": 53.66986039359506,
+      "raw_gpu_energy_j": 0.0,
+      "raw_cpu_energy_j": 19173.537728
+    },
+    "memory": {
+      "peak_mem_allocated_gb": 0.1,
+      "peak_mem_reserved_gb": 0.1,
+      "cpu_rss_mb": 5419.953125,
+      "model_params_mb": 2396.655113220215
+    },
+    "timestamp": "2026-05-29T15:55:14.631145",
+    "hw_log_file": "./profiling_logs/vggt/run_20260529_145025/cpu_bfloat16_none_power_hw_20260529_154907.csv",
+    "_model": "VGGT-1B",
+    "_environment": "Linux"
+  }
+]
