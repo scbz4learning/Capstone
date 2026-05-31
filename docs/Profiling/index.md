@@ -2,195 +2,97 @@
 
 ## Overview
 
-This section contains comprehensive profiling and benchmarking results for both SmoLVLM and VGGT models across different execution environments and configurations.
+This section documents performance profiling for **SmolVLM** (vision-language) and **VGGT** (3D vision) models on the **AMD Ryzen 7 8845HS APU (Radeon 780M)** across three environments: Windows, WSL, and Linux.
 
-### Test Environments
-
-- **Windows**: Native Windows CUDA environment
-- **WSL**: Windows Subsystem for Linux with CUDA support
-- **Ubuntu**: Native Linux environment (data needs validation)
-
-### Configurations Tested
-
-For each model, we tested multiple configurations:
-
-- **SmoLVLM**:
-    - CPU (BFloat16)
-    - iGPU (Eager attention, BFloat16)
-    - iGPU (SDPA attention, BFloat16)
-- **VGGT**:
-    - CPU (Float32)
-    - GPU (Float32)
+!!! info "Navigation"
+    - [Methodology](methodology.md) — Hardware, software, metrics, measurement methods
+    - [Full Results](result.md) — All data tables and charts
 
 ---
 
 ## Key Findings
 
-### SmoLVLM
+### SmolVLM-Instruct (2.2B) — PyTorch
 
-1. **Latency Performance**:
-   - iGPU with SDPA provides the best latency (6.9-7.3 seconds TTFT)
-   - iGPU Eager is faster than SDPA for token generation (TPOT)
-   - CPU baseline is significantly slower (~128-153 seconds TTFT)
+**iGPU with SDPA attention is the optimal PyTorch configuration**, delivering consistent ~7s TTFT across all platforms while using 35% less VRAM than Eager attention.
 
-2. **Memory Usage**:
-   - CPU: ~5.1-5.9 GB (RSS memory)
-   - iGPU Eager: ~7.8 GB (VRAM)
-   - iGPU SDPA: ~5.1 GB (VRAM)
+| Metric | CPU-BF16 | iGPU-BF16-Eager | iGPU-BF16-SDPA |
+|---|---|---|---|
+| TTFT (ms) | ~108K–153K | ~12.1K–12.4K | **~6.9K–7.3K** |
+| TPOT (ms/tok) | ~147–288 | ~111–122 | **~99–107** |
+| Peak Memory (GB) | 5.1–6.3 | 7.85 | **5.09** |
+| Tokens per Joule | 0.006–0.019 | 0.088–0.119 | **0.117–0.165** |
 
-3. **Energy Efficiency**:
-   - iGPU configurations consume less energy per inference than CPU
-   - SDPA provides better tokens-per-joule ratio
+!!! tip "iGPU over CPU"
+    iGPU acceleration provides **20–22× faster TTFT** and **1.5–2.7× faster TPOT** compared to CPU-only inference, while consuming comparable or lower power.
 
-4. **Environment Comparison**:
-   - Windows and WSL show similar performance characteristics
-   - Environment differences are minimal for GPU workloads
+### llamesa.cpp — Projected Impact (Pending Retest)
+
+!!! abstract "llama.cpp Will Be a Game Changer"
+    While PyTorch iGPU delivers ~7s TTFT, llama.cpp on the **same hardware** with quantized models is projected to achieve **real-time inference** (< 100ms TTFT, ~15ms TPOT), based on results from smaller SmolVLM models:
+
+    | Model | llama.cpp Vulkan TTFT | PyTorch iGPU TTFT | Speedup |
+    |---|---|---|---|
+    | SmolVLM2-2.2B | **95 ms** (Q4_K_M) | 6619 ms | **~70×** |
+    | SmolVLM-500M | **40 ms** (Q8_0) | 2422 ms | **~60×** |
+    | SmolVLM-256M | **20 ms** (f16) | 2133 ms | **~107×** |
+
+    These speedups come with quantization-induced accuracy loss that needs evaluation (see [Planned Accuracy Benchmarks](methodology.md#accuracy-benchmarks-planned)).
+
+!!! warning "llama.cpp SmolVLM-Instruct — Requires Custom Build"
+    The **full SmolVLM-Instruct (2.2B) model** cannot run with the **official llama.cpp** release due to model architecture compatibility issues. A custom patch is being developed.
+
+    **Recommended alternatives while patch is in progress:**
+    - **SmolVLM2-2.2B-Instruct** (fully compatible, similar quality, ~95ms TTFT via Vulkan Q4_K_M)
+    - **Smaller models** (256M / 500M) via llama.cpp for real-time use cases
+    - **PyTorch with ROCm** for full-precision inference
 
 ### VGGT
 
-1. **Latency Performance**:
-   - GPU processing is significantly faster than CPU (43.9 ms vs 192+ ms)
-   - Consistent performance across Windows and WSL
+!!! warning "VGGT is CPU-Bound"
+    VGGT shows **marginal GPU benefit** due to its model architecture. The fastest configuration is iGPU-BF16 on Linux at **30.3s per image** (0.066 img/s).
 
-2. **Memory Usage**:
-   - CPU: 4.9-6.8 GB
-   - GPU: 5.2-5.4 GB
+| Config | Latency | Throughput | Note |
+|---|---|---|---|
+| CPU (any platform) | 32s–327s | 0.006–0.061 img/s | Linux fastest, WSL slowest |
+| iGPU BF16 (Linux) | **30.3s** | **0.066 img/s** | Best result |
+| iGPU F32 (Linux) | 43.3s–45.1s | 0.044–0.046 img/s | Negligible SDPA benefit |
 
-3. **Power Efficiency**:
-   - GPU provides better performance-per-watt despite higher absolute power consumption
-   - More efficient for batch processing
-
----
-
-## Conclusions
+    iGPU results on Windows/WSL are incomplete — see [VGGT section](result.md#3-vggt) for details.
 
 ### Platform Comparison
 
-1. **GPU Performance**:
-   - Windows GPU and WSL GPU show virtually identical performance
-   - Ubuntu GPU performance appears to be equivalent to WSL (pending validation)
+| Workload | Windows | WSL | Linux |
+|---|---|---|---|
+| CPU inference | Slowest | Slow | **Fastest (15–30% better)** |
+| iGPU inference | ✅ Good | ✅ Good | ✅ Good (±5% across platforms) |
+| Power measurement | Direct RAPL | Host-side RAPL | Direct RAPL |
 
-2. **CPU Performance**:
-   - Ubuntu CPU performance is superior to both Windows and WSL
-   - Likely due to better Linux kernel optimization for CPU workloads
-   - Difference ranges from 10-20% depending on workload
+!!! note "WSL Power Caveat"
+    WSL GPU power is measured indirectly from the Windows host. Efficiency metrics (Tokens/Joule, img/W) may not be directly comparable to native Windows/Linux measurements.
 
-3. **Recommendations**:
-   - **For GPU-bound workloads**: Windows and WSL offer equivalent performance; choose based on ecosystem preference
-   - **For CPU-bound inference**: Ubuntu or native Linux deployment is recommended
-   - **For development**: WSL provides good balance of Windows convenience and Linux performance
+### Model Size vs Speed (llama.cpp, Linux)
 
-### Model-Specific Insights
+![SmolVLM llama.cpp TTFT](../assets/profiling/smolvlm_llamacpp_ttft_ms.png)
 
-**SmoLVLM**:
-
-- Strongly benefits from GPU acceleration (20-30x speedup vs CPU)
-- SDPA attention provides better latency characteristics
-- iGPU (GPU) SDPA configuration is optimal for most scenarios
-
-**VGGT**:
-
-- Significant speedup with GPU (4-5x vs CPU)
-- More balanced memory consumption than SmoLVLM
-- Suitable for both mobile and server deployment depending on configuration
+The chart above illustrates the dramatic speed difference across model sizes and backends. SmolVLM-256M via Vulkan achieves **real-time inference** at only **20ms TTFT**, making it suitable for interactive robotics applications where latency matters more than peak accuracy.
 
 ---
 
-## Important Notes
+## Quick Navigation
 
-!!! note "Ubuntu Data Validation Required"
-    
-    The profiling data from Ubuntu/Linux environment shows some anomalies and requires validation. Ubuntu GPU performance data may not be fully accurate in the current results. A fresh profiling run is recommended for Ubuntu to ensure data consistency and accuracy.
-    
-    **Action Items**:
-    - Re-run comprehensive profiling on Ubuntu environment
-    - Verify CUDA and driver configurations
-    - Compare results with Windows and WSL baselines
+| Section | Content |
+|---|---|
+| [Methodology](methodology.md) | Hardware specs, software versions, metric definitions |
+| [SmolVLM-Instruct (PyTorch)](result.md#1-smolvlm-instruct-pytorch) | Full precision results across 3 environments |
+| [SmolVLM-Instruct (llama.cpp, Pending)](result.md#2-smolvlm-instruct-llamacpp--pending) | Placeholder for upcoming llama.cpp retest |
+| [VGGT](result.md#3-vggt) | All configs across platforms |
+| [Other SmolVLM Models](result.md#4-other-smolvlm-family-models) | Smaller models, PyTorch + llama.cpp |
 
----
+## Next Steps
 
-## Detailed Performance Charts
-
-### SmoLVLM Results
-
-#### Time to First Token (TTFT)
-
-![SmoLVLM TTFT](../assets/profiling/smolvlm_ttft_ms.png)
-
-The Time to First Token metric shows latency for generating the first token, which is critical for interactive applications.
-
-#### Time Per Output Token (TPOT)
-
-![SmoLVLM TPOT](../assets/profiling/smolvlm_tpot_ms.png)
-
-Time Per Output Token represents the sustained throughput during token generation.
-
-#### Power Consumption
-
-![SmoLVLM Average Power](../assets/profiling/smolvlm_avg_power_w.png)
-
-Average power consumption across different configurations and environments.
-
-#### Energy per Inference
-
-![SmoLVLM Energy per Inference](../assets/profiling/smolvlm_energy_per_inference_j.png)
-
-Total energy consumed per inference run.
-
-#### Tokens per Joule
-
-![SmoLVLM Tokens per Joule](../assets/profiling/smolvlm_tokens_per_joule.png)
-
-Energy efficiency metric showing tokens generated per unit of energy consumed.
-
-#### Memory Usage
-
-![SmoLVLM Peak Memory](../assets/profiling/smolvlm_peak_memory_gb.png)
-
-Peak memory allocation during inference. CPU configurations show total RSS memory, GPU configurations show VRAM usage.
-
----
-
-### VGGT Results
-
-#### Inference Latency
-
-![VGGT Latency](../assets/profiling/vggt_latency_ms.png)
-
-Time required to process a single image through the model.
-
-#### Throughput
-
-![VGGT Throughput](../assets/profiling/vggt_throughput_img_per_s.png)
-
-Number of images processed per second.
-
-#### Power Consumption
-
-![VGGT Average Power](../assets/profiling/vggt_avg_power_w.png)
-
-Average power consumption across configurations.
-
-#### Energy per Inference
-
-![VGGT Energy per Inference](../assets/profiling/vggt_energy_per_inference_j.png)
-
-Energy consumed per image inference.
-
-#### Memory Usage
-
-![VGGT Peak Memory](../assets/profiling/vggt_peak_memory_gb.png)
-
-Peak memory usage during image processing.
-
----
-
-## Testing Methodology
-
-- **Warmup iterations**: 10
-- **Test iterations**: 20 (latency), 10 (power)
-- **Measurement mode**: RAPL (Windows/WSL), perf counters (Linux where available)
-- **Data types**: BFloat16 (SmoLVLM), Float32 (VGGT)
-- **Output tokens**: 128 (SmoLVLM), varied (VGGT)
-
-For detailed methodology and profiling scripts, refer to the benchmark configuration files and scripts in the repository.
+!!! example "Planned Work"
+    1. **Retest llama.cpp SmolVLM-Instruct** on Linux (CPU + Vulkan + ROCm)
+    2. **Test llama.cpp on Windows** (CPU + Vulkan) and **WSL** (CPU + ROCm)
+    3. **Evaluate quantization accuracy** on TextVQA and AI2D benchmarks
+    4. **Complete VGGT iGPU testing** on Windows/WSL
