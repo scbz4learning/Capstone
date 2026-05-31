@@ -19,13 +19,13 @@
         "temperature": null,
         "passes": {
             "warmup": {
-                "num_warmup": 1
+                "num_warmup": 10
             },
             "end_to_end": {
-                "num_test": 1
+                "num_test": 20
             },
             "power": {
-                "num_test": 1
+                "num_test": 10
             }
         }
     },
