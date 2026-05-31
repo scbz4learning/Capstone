@@ -19,20 +19,14 @@
 | **PyTorch** | 2.10.0+rocm7.13.0a20260424 (Linux); Windows: TBD; WSL: TBD |
 | **ROCm** | 7.13.0a (installed via PyPI — `rocm-sdk-core`, `rocm-sdk-libraries-gfx110X-all`) |
 | **Transformers** | 5.8.1 |
-| **llama.cpp** | b9357 (patched for SmolVLM-Instruct) |
+| **llama.cpp** | b9357 (official for most models; patched for SmolVLM-Instruct — see below) |
 
 !!! warning "No Official ROCm Support"
     The Ryzen 7 8845HS / Radeon 760M is **not officially supported** by AMD's ROCm. Community support is provided via [TheRock](https://github.com/ROCm/TheRock) project. GPU driver on Linux uses the open-source `amdgpu` kernel driver.
 
-## llama.cpp Build Status
 
-!!! bug "SmolVLM-Instruct Full Model"
-    The **full SmolVLM-Instruct (2.2B) model** cannot be correctly inferred with the **official llama.cpp** build due to model architecture compatibility issues. A custom patch is being developed to add proper support. See pending [GitHub issue](#) (TBD).
-
-    **Recommended alternatives while the patch is in progress:**
-    - Use **SmolVLM2-2.2B-Instruct** (fully compatible, similar quality)
-    - Use **smaller models** (SmolVLM-256M / 500M) via llama.cpp for real-time use cases
-    - Use **PyTorch with ROCm** for full-precision inference
+!!! note "llama.cpp (b9357) — SmolVLM-Instruct patch"
+    Tests used the official `llama.cpp` `b9357` and official GGUF images. SmolVLM-Instruct (2.2B) required a small quick-fix because its tokenizer lacked the IDEFICS3 marker `<global-img>`, which caused `lookup_token` to return `LLAMA_TOKEN_NULL` (−1) and fail decoding. For testing we filtered out `LLAMA_TOKEN_NULL` in `mtmd.cpp`; the proper fix is to add missing marker tokens during HF→GGUF conversion (see `conversion/smolvlm.py->_set_vocab_llama_hf`).
 
 ## Test Environments
 
@@ -50,7 +44,7 @@ Three environments were benchmarked:
 |---|---|---|---|
 | SmolVLM-256M-Instruct | 256M | Vision-Language | ✅ Yes |
 | SmolVLM-500M-Instruct | 500M | Vision-Language | ✅ Yes |
-| SmolVLM-Instruct | 2.2B | Vision-Language | ❌ Fork/Patch needed |
+| SmolVLM-Instruct | 2.2B | Vision-Language | ✅ Yes (patched build b9357) |
 | SmolVLM2-256M-Video-Instruct | 256M | Vision-Language (Video) | ✅ Yes |
 | SmolVLM2-500M-Video-Instruct | 500M | Vision-Language (Video) | ✅ Yes |
 | SmolVLM2-2.2B-Instruct | 2.2B | Vision-Language (Video) | ✅ Yes |

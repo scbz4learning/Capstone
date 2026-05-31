@@ -6,12 +6,8 @@
 
 ## 1. SmolVLM-Instruct
 
-!!! warning "llama.cpp Data Pending Retest"
-    SmolVLM-Instruct llama.cpp data was removed due to quality issues. Requires retest with the custom llama.cpp build (see [methodology](methodology.md#llamacpp-build-status)). PyTorch results are below; llama.cpp rows pending.
-
-
 | Dtype | Configuration | TTFT (ms) | TPOT (ms) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Tokens per Joule |
-|---|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|---|
 | **BF16** | Windows-PyTorch-CPU | 153479.1 | 177.8 | 50.65 | 10026.4 | 5.07 | 0.0128 |
 | | WSL-PyTorch-CPU | 128283.0 | 288.0 | 45.26 | 19624.3 | 5.92 | 0.0065 |
 | | Linux-PyTorch-CPU | 108474.0 | 147.4 | 51.03 | 6645.3 | 6.30 | 0.0193 |
@@ -21,15 +17,15 @@
 | | Windows-PyTorch-iGPU-SDPA | 6954.4 | 107.0 | 42.75 | 936.4 | 5.09 | 0.1367 |
 | | WSL-PyTorch-iGPU-SDPA | 7272.6 | 105.9 | 45.49 | 1091.4 | 5.09 | 0.1173 |
 | | Linux-PyTorch-iGPU-SDPA | 6933.8 | 99.22 | 37.65 | 777.9 | 5.09 | 0.1645 |
-| **f16** | Linux-llama.cpp-CPU | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-Vulkan | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-ROCm | - | - | - | - | - | - |
-| **Q8_0** | Linux-llama.cpp-CPU | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-Vulkan | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-ROCm | - | - | - | - | - | - |
-| **Q4_K_M** | Linux-llama.cpp-CPU | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-Vulkan | - | - | - | - | - | - |
-| | Linux-llama.cpp-iGPU-ROCm | - | - | - | - | - | - |
+| **f16** | Linux-llama.cpp-CPU | 371.1 | 59.98 | 47.65 | 400.7 | 7.02 | 0.319 |
+| | Linux-llama.cpp-iGPU-Vulkan | 115.6 | 46.75 | 53.29 | 338.3 | 0.20 | 0.378 |
+| | Linux-llama.cpp-iGPU-ROCm | 750.7 | 59.47 | 97.87 | 845.4 | 7.02 | 0.151 |
+| **Q8_0** | Linux-llama.cpp-CPU | 306.9 | 32.90 | 51.28 | 244.1 | 5.43 | 0.524 |
+| | Linux-llama.cpp-iGPU-Vulkan | 94.7 | 24.37 | 67.43 | 222.3 | 0.20 | 0.576 |
+| | Linux-llama.cpp-iGPU-ROCm | 339.9 | 32.81 | 105.3 | 489.1 | 5.44 | 0.262 |
+| **Q4_K_M** | Linux-llama.cpp-CPU | 305.1 | 20.12 | 51.95 | 155.9 | 4.68 | 0.821 |
+| | Linux-llama.cpp-iGPU-Vulkan | 95.3 | 15.36 | 68.10 | 143.3 | 0.20 | 0.893 |
+| | Linux-llama.cpp-iGPU-ROCm | 295.7 | 20.10 | 105.2 | 308.9 | 4.68 | 0.414 |
 
 ### Charts
 
@@ -92,7 +88,7 @@
 ## 3. Full SmolVLM Family (All Models)
 
 !!! info "Model Naming & Test Environment"
-    SmolVLM-Instruct (original) and SmolVLM2-* (second generation, adds video understanding). **All tests in this table are on Linux** — PyTorch rows use iGPU-BF16-SDPA, llama.cpp rows cover CPU/Vulkan/ROCm backends. llama.cpp data for SmolVLM-Instruct is pending retest (custom build needed).
+    SmolVLM-Instruct (original) and SmolVLM2-* (second generation, adds video understanding). **All tests in this table are on Linux** — PyTorch rows use iGPU-BF16-SDPA, llama.cpp rows cover CPU/Vulkan/ROCm backends.
 
 | Model | Backend | Dtype | TTFT (ms) | TPOT (ms) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Tokens per Joule |
 |---|---|---|---|---|---|---|---|---|
@@ -117,15 +113,15 @@
 | | llama.cpp-rocm | Q8_0 | 76.26 | 7.68 | 105.2 | 114.0 | 0.87 | 1.12 |
 | | llama.cpp-rocm | Q4_K_M | - | - | - | - | - | - |
 | **SmolVLM-Instruct** | PyTorch-iGPU-sdpa | bf16 | 6933.8 | 99.22 | 37.65 | 777.9 | 5.09 | 0.1645 |
-| | llama.cpp-cpu | f16 | - | - | - | - | - | - |
-| | llama.cpp-cpu | Q8_0 | - | - | - | - | - | - |
-| | llama.cpp-cpu | Q4_K_M | - | - | - | - | - | - |
-| | llama.cpp-vulkan | f16 | - | - | - | - | - | - |
-| | llama.cpp-vulkan | Q8_0 | - | - | - | - | - | - |
-| | llama.cpp-vulkan | Q4_K_M | - | - | - | - | - | - |
-| | llama.cpp-rocm | f16 | - | - | - | - | - | - |
-| | llama.cpp-rocm | Q8_0 | - | - | - | - | - | - |
-| | llama.cpp-rocm | Q4_K_M | - | - | - | - | - | - |
+| | llama.cpp-cpu | f16 | 371.1 | 59.98 | 47.65 | 400.7 | 7.02 | 0.319 |
+| | llama.cpp-cpu | Q8_0 | 306.9 | 32.90 | 51.28 | 244.1 | 5.43 | 0.524 |
+| | llama.cpp-cpu | Q4_K_M | 305.1 | 20.12 | 51.95 | 155.9 | 4.68 | 0.821 |
+| | llama.cpp-vulkan | f16 | 115.6 | 46.75 | 53.29 | 338.3 | 0.20 | 0.378 |
+| | llama.cpp-vulkan | Q8_0 | 94.7 | 24.37 | 67.43 | 222.3 | 0.20 | 0.576 |
+| | llama.cpp-vulkan | Q4_K_M | 95.3 | 15.36 | 68.10 | 143.3 | 0.20 | 0.893 |
+| | llama.cpp-rocm | f16 | 750.7 | 59.47 | 97.87 | 845.4 | 7.02 | 0.151 |
+| | llama.cpp-rocm | Q8_0 | 339.9 | 32.81 | 105.3 | 489.1 | 5.44 | 0.262 |
+| | llama.cpp-rocm | Q4_K_M | 295.7 | 20.10 | 105.2 | 308.9 | 4.68 | 0.414 |
 | **SmolVLM2-256M-Video-Instruct** | PyTorch-iGPU-sdpa | bf16 | 2132.4 | 17.85 | 32.62 | 152.0 | 1.39 | 0.8418 |
 | | llama.cpp-cpu | f16 | 67.47 | 5.44 | 48.70 | 38.86 | 0.63 | 3.29 |
 | | llama.cpp-cpu | Q8_0 | 30.14 | 3.31 | 51.93 | 24.57 | 0.48 | 5.21 |
