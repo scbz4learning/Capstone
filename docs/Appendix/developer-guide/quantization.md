@@ -542,7 +542,7 @@ ONNX Runtime offers pre-quantized model variants downloaded via `scripts/onnx/sm
 | `int8` | ~3 GB | 8-bit integer |
 | `bnb4` | ~1.6 GB | bitsandbytes 4-bit |
 
-These were not retested during this quantization investigation session. Their limitations are documented in [ONNX Runtime](../Inference_Frameworks/onnxruntime.md): the vision encoder runs on CPU, negating any decoder quantization speedup.
+These were not retested during this quantization investigation session. Their limitations are documented in [ONNX Runtime](../../Architecture/Inference_Frameworks/onnxruntime.md): the vision encoder runs on CPU, negating any decoder quantization speedup.
 
 ---
 
@@ -599,5 +599,5 @@ Python version does not affect quantization outcomes. Python 3.10 was chosen for
 - [SmolVLM-Instruct on Hugging Face](https://huggingface.co/HuggingFaceTB/SmolVLM-Instruct)
 - [ROCm Model Quantization Guide](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/inference-optimization/model-quantization.html)
 - [Known Issues on This Platform](../known-issues.md)
-- [PyTorch on ROCm](../Inference_Frameworks/pytorch.md)
-- [ONNX Runtime on ROCm](../Inference_Frameworks/onnxruntime.md)
+- [PyTorch on ROCm](../../Architecture/Inference_Frameworks/pytorch.md)
+- [ONNX Runtime on ROCm](../../Architecture/Inference_Frameworks/onnxruntime.md)

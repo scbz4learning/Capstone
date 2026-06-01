@@ -1,60 +1,128 @@
 # GPU Inference
 
-## Overview
+Before settling on CPU, first determine whether your device supports GPU
+acceleration through the decision flowchart below.
 
-GPU support for model inference is quite comprehensive and well-established in the current ecosystem. Unlike NPU solutions which are still evolving and have limited compatibility, GPU acceleration provides superior cross-platform compatibility, supports a much wider range of application scenarios, and offers stable, predictable performance improvements with strong quality guarantees. This makes GPUs an ideal choice for production deployments requiring reliability and consistent acceleration across diverse hardware and software environments.
+## Decision Flowchart
 
-## Inference Frameworks
+```
+Official driver
+[Radeon compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/compatibility.html)
+[Ryzen compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/compatibility.html)
+├── Yes → Use official driver. Choose any inference framework that supports ROCm or Vulkan; results may vary by model
+└── No → Check if any inference framework supports Vulkan for the model
+    ├── Yes → Use Vulkan to drive GPU inference
+    └── No → Try TheRock (https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md) community build for GPU inference
+        Usually fine, even if slower
+        If missing or problematic — known issues on GitHub, or operators that are truly special → fall back to CPU
+```
 
-Selecting the right inference framework often involves a fundamental trade-off between **throughput** and **latency**. Based on our evaluation:
+---
 
-- **vLLM and SGLang** are primarily optimized for server-side deployments and high-concurrency scenarios. By implementing **PagedAttention** and advanced memory management, these frameworks significantly increase throughput and reduce VRAM fragmentation, making them the preferred choice for Large-Language-Model-as-a-Service (LLMaaS) where processing many requests simultaneously is the priority.
+## Driver Installation
 
-- **PyTorch and llama.cpp** are often more suitable for robotic control, edge computing, and localized interaction. These frameworks prioritize **low latency** and minimal response time over high throughput. While PyTorch offers unmatched flexibility for research and integration with tools like ROS2, llama.cpp provides a lightweight, dependency-free C++ implementation that excels on resource-constrained hardware such as iGPUs and CPUs.
+### Ubuntu / Linux
 
-- **ONNX Runtime** offers significant performance gains and cross-vendor stability for fixed production models. By utilizing static graph optimizations, it ensures robust performance across different hardware like NVIDIA, Intel, and AMD. However, it requires more engineering effort for model adaptation, as complex or newer multi-modal architectures may face operator compatibility issues during the export process.
+#### Install AMDGPU Driver
 
-## Acceleration Backends
+The Linux kernel usually includes the `amdgpu` driver by default, so a separate driver installation is generally not required.
 
-To drive GPU acceleration, there are 3 primary options available:
+If PyTorch does not run correctly or GPU detection fails, some users have reported that uninstalling `amdgpu-dkms` can help. See the discussion in [ROCm/TheRock issue #3618](https://github.com/ROCm/TheRock/issues/3618#issuecomment-4281691473) and the official AMD quick-start guide at https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html for the recommended recovery steps.
 
-- **ROCm and Vulkan (Recommended)** — The most stable and reliable approaches for GPU-accelerated inference. Both have undergone extensive testing and provide robust support across different hardware platforms and software stacks.
+### Windows
 
-- **DirectML (Windows Only)** — Available on Windows systems as an alternative option. However, it typically exhibits lower acceleration efficiency compared to ROCm and Vulkan, and may not be suitable for performance-critical applications.
+Install the latest [Adrenalin driver](https://www.amd.com/en/products/software/adrenalin.html).
 
-## ROCm (Radeon Open Compute)
+#### WSL2
 
-ROCm is the flagship open-source software stack for GPU-accelerated computing, supporting both **Linux** and **Windows** environments. It provides the necessary drivers, development tools, and APIs to leverage the full power of AMD GPUs for AI inference and high-performance computing.
+Install **AMD Software: Adrenalin Edition 26.2.2 for WSL2** or later to ensure proper GPU passthrough to the Linux subsystem.
 
-### Installation Options
 
-Users can choose between two main installation paths depending on their hardware and requirements:
+---
 
-- **Official Drivers (Recommended)**: These are the officially supported releases from AMD, providing the most stable and feature-complete experience for supported hardware.
-    - **Requirements**: Detailed system requirements can be found for [Linux](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html) and [Windows](https://rocm.docs.amd.com/projects/install-on-windows/en/latest/reference/system-requirements.html).
-    - **Ecosystem Support**: Official drivers are integrated with a wide range of ML frameworks and libraries. See the [ROCm Compatibility Matrix](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html) for more details.
+## Accelerated Backends
 
-- **Community Drivers (TheRock)**: For devices not officially listed in the AMD support matrix, the [TheRock](https://github.com/ROCm/TheRock) project offers community-driven builds with broader hardware compatibility.
+### 1. ROCm
+#### Compatibility
 
-!!! warning "Potential Desktop Environment Conflicts"
-    On Linux systems, installing ROCm drivers via TheRock may conflict with graphical user interfaces (GUIs). It is highly recommended to use these drivers in a **headless** environment (no desktop environment) to ensure system stability.
+[Radeon compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/compatibility.html)
+[Ryzen compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/compatibility.html)
 
-### TheRock Installation Methods
+#### Installation
 
-TheRock project provides multiple ways to deploy ROCm components as described in their [releases documentation](https://github.com/ROCm/TheRock/blob/main/RELEASES.md):
+Follow [ROCm on Radeon and Ryzen](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/index.html).
 
-- **Python Packages (via PyPI)** — **Highly Recommended** 
-    - **Stability**: Distributing through PyPI ensures access to stable, verified versions of the stack.
-    - **Ease of Use**: Installation is a simple `pip install` process without complex system configuration.
-    - **Safe Environment**: Using Python packages avoids "system pollution" by keeping the ROCm stack isolated within virtual environments, preventing version conflicts with other system applications.
+#### Key Capabilities
+
+[ROCm Key Capabilities](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/index.html#rocm-key-capabilities)
+
+---
+
+### 2. Vulkan
+
+Vulkan is a modern cross-platform graphics and compute API that provides
+high-efficiency access to modern GPUs.
+
+#### Installation
+
+See the **Driver Installation** section above.
+
+- **Windows**: Ensure you have the latest AMD Adrenalin, NVIDIA Game Ready, or Intel Graphics driver. The Vulkan runtime is included.
+- **Linux**: On modern distributions such as Ubuntu 24.04 LTS, the Vulkan driver should already present. 
+
+!!! tip "Missing Vulkan?"
+
+    A community advice is as below (**NOT TESTED by author**):
+
+    > If missing, install:
+    >
+    > ```bash
+    > sudo apt install mesa-vulkan-drivers
+    > ```
+    > 
+    > This covers both the loader and the open-source RADV driver.
+
+---
+
+### 3. TheRock (Community ROCm)
+
+!!! warning "Check support status before using TheRock"
+    Community ROCm builds are not as stable or complete as official ROCm releases. Before proceeding, verify your GPU's support status:
+    - [SUPPORTED_GPUS.md](https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md)
+    - [Windows support status](https://github.com/ROCm/TheRock/blob/main/docs/development/windows_support.md)
+
+!!! info "Where to get help"
+    Community ROCm is less stable and you may encounter various issues. For support, check:
+    - [Known Issues](../Appendix/known-issues.md)
+    - [Environment setup guide](https://github.com/ROCm/TheRock/blob/main/docs/environment_setup_guide.md)
+    - [FAQ](https://github.com/ROCm/TheRock/blob/main/docs/faq.md)
+    - [GitHub Issues](https://github.com/ROCm/TheRock/issues)
+
+!!! example "Example hardware: Radeon 780M (gfx1103)"
+    The installation steps below use Radeon 780M (`gfx1103`) as the example target.
+
+#### Linux (Ubuntu)
+
+##### Install `uv` and Create Virtual Environment
+
+```bash
+sudo apt update
+sudo apt install curl -y
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+uv venv venv
+source venv/bin/activate
+```
+
+##### Install Pre-built Packages (Recommended)
 
 !!! note "Multi-arch Installation for Unsupported Devices"
-    If your specific hardware is not covered by the "Per-family releases", you should use the **Multi-arch PyTorch Python packages** approach. 
-    
+    If your specific hardware is not covered by the "Per-family releases", you should use the multi-arch PyTorch Python packages approach.
+
     For example, attempting to install for `gfx1150` via a family-specific index might fail:
     ```bash
     # This may return an error for non-existent index
-    pip install --index-url https://rocm.nightlies.amd.com/v2/gfx1151/ torch torchaudio torchvision
+    pip install --index-url https://rocm.nightlies.amd.com/v2/gfx1151/ torch torchvision torchvision
     ```
     Instead, use the unified multi-arch index with device extras:
     ```bash
@@ -63,25 +131,204 @@ TheRock project provides multiple ways to deploy ROCm components as described in
         "torch[device-gfx1150]" "torchvision[device-gfx1150]" torchaudio
     ```
 
-- **Tarballs**: Standalone binary archives that can be extracted into any directory, useful for portable or non-standard installations.
-- **Native OS Packages**: Standard `.deb` and `.rpm` packages for deep integration with Linux distributions.
+```bash
+uv pip install --index-url https://rocm.nightlies.amd.com/v2/gfx110X-all/ torch torchvision torchaudio
+```
 
 
-## Vulkan
+##### Build Tools (for Source Build)
 
-Vulkan is a modern cross-platform graphics and compute API that provides high-efficiency access to modern GPUs. It serves as a great alternative for GPU acceleration, especially where specialized stacks like ROCm are not available or when broad hardware compatibility is required.
+```bash
+sudo apt install gfortran git ninja-build cmake g++ pkg-config xxd patchelf automake libtool python3-venv python3-dev libegl1-mesa-dev texinfo bison flex
+```
 
-### Support and Installation
+Source build reference: [TheRock repository](https://github.com/ROCm/TheRock/blob/main/RELEASES.md#manual-tarball-extraction)
 
-- **Windows**: On Windows systems, having the latest official graphics drivers (AMD Adrenalin, NVIDIA Game Ready, or Intel Graphics drivers) is typically sufficient. The Vulkan runtime is included in the driver package.
-- **Linux**: On Linux, Vulkan support is provided through drivers like **RADV** (part of Mesa for AMD) or the NVIDIA proprietary driver. 
-    - For AMD users, the open-source **RADV** driver included in most modern distributions is highly capable.
-    - Installation usually involves installing the Vulkan loader and development headers (e.g., `sudo apt install libvulkan-dev` on Ubuntu).
+##### Test ROCm with PyTorch
 
-### llama.cpp Integration
+```python
+import torch
+import time
 
-Vulkan is a first-class citizen in the **llama.cpp** ecosystem. It allows models to be offloaded to the GPU using the Vulkan backend, which is particularly useful for integrated GPUs (iGPUs) or older hardware. On Linux, the **RADV** driver is often used to execute Vulkan-based inference with excellent performance.
+print("ROCm:", torch.version.hip)
+print("GPU available:", torch.cuda.is_available())
 
-!!! info "WIP: Ongoing Testing"
-    Vulkan-based inference is currently under active testing. Performance benchmarks and detailed configuration guides for different hardware platforms will be updated soon.
+if torch.cuda.is_available():
+    print(torch.cuda.get_device_name(0))
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
+
+tensor_a_cpu = torch.full((1000, 1000), 2.0, device='cpu')
+tensor_b_cpu = torch.full((1000, 1000), 3.0, device='cpu')
+
+start_time = time.time()
+result_cpu = tensor_a_cpu + tensor_b_cpu
+cpu_time = time.time() - start_time
+print(f"CPU operation took: {cpu_time:.6f} seconds")
+
+if torch.cuda.is_available():
+    tensor_a_gpu = tensor_a_cpu.to('cuda')
+    tensor_b_gpu = tensor_b_cpu.to('cuda')
+
+    torch.cuda.synchronize()
+    start_time = time.time()
+    result_gpu = tensor_a_gpu + tensor_b_gpu
+    torch.cuda.synchronize()
+    gpu_time = time.time() - start_time
+    print(f"GPU operation took: {gpu_time:.6f} seconds")
+
+    result_gpu_cpu = result_gpu.to('cpu')
+
+    if torch.allclose(result_cpu, result_gpu_cpu):
+        print("CPU and GPU results match!")
+    else:
+        print("Results differ!")
+```
+
+Sample output:
+```
+CPU operation took: 0.004181 seconds
+GPU operation took: 0.001731 seconds
+CPU and GPU results match!
+```
+
+##### Legacy Note
+
+Before Dec 2025, ROCm required `export HSA_OVERRIDE_GFX_VERSION=11.0.0`. This is no longer necessary.
+
+#### Windows
+
+##### Prerequisites
+
+1. Install latest [Adrenalin driver](../../Drivers/index.md)
+2. Read [TheRock release guidance](https://github.com/ROCm/TheRock/blob/main/RELEASES.md)
+
+##### ROCm Installation Paths
+
+###### Option 1 (recommended): pip + nightlies
+
+```bash
+uv pip install --index-url https://rocm.nightlies.amd.com/v2/gfx110X-all/ "rocm[libraries,devel]"
+```
+
+###### Option 2 (artifacts download)
+
+1. Clone [TheRock repository](https://github.com/ROCm/TheRock)
+2. Run: `TheRock\build_tools\install_rocm_from_artifacts.py`
+3. Channels: `dev` (recommended) or `nightly`
+
+See: [Artifact install docs](https://github.com/ROCm/TheRock/blob/main/docs/development/installing_artifacts.md)
+
+###### Option 3 (source build, least recommended)
+
+Requires ~100GB disk. Use only if you need custom build control.
+
+```bash
+# Prerequisites
+git config --global core.symlinks true
+git config --global core.longpaths true
+git config --global core.autocrlf true
+```
+
+See: [TheRock Windows build docs](https://github.com/ROCm/TheRock/blob/main/docs/development/windows_support.md)
+
+##### PyTorch Installation
+
+!!! note "Multi-arch Installation for Unsupported Devices"
+    If your specific hardware is not covered by the "Per-family releases", you should use the multi-arch PyTorch Python packages approach.
+
+    For example, attempting to install for `gfx1150` via a family-specific index might fail:
+    ```bash
+    # This may return an error for non-existent index
+    pip install --index-url https://rocm.nightlies.amd.com/v2/gfx1151/ torch torchvision torchvision
+    ```
+    Instead, use the unified multi-arch index with device extras:
+    ```bash
+    # Correct installation method
+    pip install --index-url https://rocm.nightlies.amd.com/whl-multi-arch/ \
+        "torch[device-gfx1150]" "torchvision[device-gfx1150]" torchaudio
+    ```
+
+```bash
+uv pip install --index-url https://rocm.nightlies.amd.com/v2/gfx110X-all/ torch torchaudio torchvision
+```
+
+Supports Python 3.10-3.12 for Torch 2.9 & 2.10.
+
+##### Known Issues
+
+See the dedicated known-issues appendix: [Known Issues](../Appendix/known-issues.md)
+
+#### WSL2
+
+Since January 2026, Radeon has **production-level support** for WSL2.
+
+!!! info "WSL ROCm support status"
+    For the latest WSL ROCm/DXG interop support status, see:
+    - [WSL ROCm DXG docs](https://github.com/ROCm/TheRock/blob/main/docs/development/wsl_rocdxg.md)
+
+##### Reference Documentation
+
+- [ROCm on WSL2 installation guide](https://rocm.docs.amd.com/projects/radeon-ryzen/en/docs-7.2.1/docs/install/installrad/wsl/howto_wsl.html)
+- [librocdxg — ROCm DirectX GPU interop](https://github.com/ROCm/librocdxg/)
+
+##### Installation Steps
+
+###### 1. Install WSL2
+
+Follow [WSL2 documentation](https://learn.microsoft.com/en-us/windows/wsl/). Ubuntu 24.04 and 22.04 are supported.
+
+###### 2. Install ROCm in WSL (Community Driver)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv pip install --pre torch torchvision torchaudio \
+  --index-url https://rocm.nightlies.amd.com/v2/gfx110X-all/
+```
+
+###### 3. Install librocdxg
+
+```bash
+git clone https://github.com/ROCm/librocdxg.git
+cd librocdxg
+
+export win_sdk='/mnt/c/Program Files (x86)/Windows Kits/10/Include/10.0.26100.0/'
+
+mkdir -p build
+cd build
+cmake .. -DWIN_SDK="${win_sdk}/shared"
+make
+sudo make install
+```
+
+###### 4. Environment Variables
+
+```bash
+export HSA_ENABLE_DXG_DETECTION=1
+export LD_LIBRARY_PATH=/opt/rocm/lib:$LD_LIBRARY_PATH
+```
+
+---
+
+## CPU Fallback
+
+If none of the above paths are viable for your hardware or model, fall back
+to CPU inference.
+
+- **llama.cpp** — low-latency CPU inference with optimized kernels
+- **ONNX Runtime** — CPU execution provider with graph optimizations
+- **PyTorch** — flexible CPU execution; consider `torch.compile` and quantization
+
+---
+
+## Summary
+
+| Path | Readiness | When to Use |
+|------|-----------|-------------|
+| ROCm (Official) | Production | Device in AMD compatibility tables |
+| Vulkan | Production | No ROCm, but Vulkan-capable driver available |
+| TheRock | Community | Device not officially supported; headless Linux |
+| CPU | Baseline | No GPU acceleration path available |
+
+The recommended priority is: **ROCm → Vulkan → TheRock → CPU**.
