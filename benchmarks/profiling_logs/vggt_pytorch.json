@@ -90,7 +90,7 @@
       "avg_total_adjusted_w": 43.05129630526899,
       "avg_idle_w": 9.02,
       "energy_per_inference_j": 17067.190634249266,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.00014178847975072908,
       "raw_energy_j": 170671.90634249264,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 3277.72s, idle: 9.02W)"
@@ -122,7 +122,7 @@
       "avg_total_adjusted_w": 42.65131991619374,
       "avg_idle_w": 9.02,
       "energy_per_inference_j": 2808.291858439393,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.0008630633325825276,
       "raw_energy_j": 28082.918584393927,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 543.50s, idle: 9.02W)"
@@ -525,7 +525,7 @@
       "avg_total_adjusted_w": 44.95441543654718,
       "avg_idle_w": 7.1,
       "energy_per_inference_j": 371.5782682779138,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.0062489148096567994,
       "raw_energy_j": 3715.782682779138,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 71.38s, idle: 7.10W)"
@@ -560,7 +560,7 @@
       "avg_total_adjusted_w": 44.389030362920934,
       "avg_idle_w": 7.1,
       "energy_per_inference_j": 465.1731136556693,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.004977650188122568,
       "raw_energy_j": 4651.731136556693,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 90.34s, idle: 7.10W)"
@@ -595,7 +595,7 @@
       "avg_total_adjusted_w": 41.58187923025882,
       "avg_idle_w": 7.1,
       "energy_per_inference_j": 79.05127719775516,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.030124480582744046,
       "raw_energy_j": 790.5127719775516,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 16.24s, idle: 7.10W)"
@@ -630,7 +630,7 @@
       "avg_total_adjusted_w": 43.14782964465662,
       "avg_idle_w": 7.1,
       "energy_per_inference_j": 78.58910954069094,
-      "img_per_sec_watt": 0,
+      "img_per_sec_watt": 0.029746854749631714,
       "raw_energy_j": 785.8910954069094,
       "measurement_mode": "RAPL_Windows_WSL",
       "note": "Integrated from Host (dur: 15.64s, idle: 7.10W)"

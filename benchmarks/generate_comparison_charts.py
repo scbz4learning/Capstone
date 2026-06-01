@@ -235,7 +235,7 @@ def plot_vggt():
                 'cpu_float32_none': 'CPU-F32', 'cpu_bfloat16_none': 'CPU-BF16'}
 
     metrics = [('Latency (ms)', 'ms'), ('Throughput (img/s)', 'img/s'), ('Avg Power (W)', 'W'),
-               ('Energy per Inference (J)', 'J'), ('Peak Memory (GB)', 'GB'), ('Efficiency (mimg/W)', 'mimg/W')]
+               ('Energy per Inference (J)', 'J'), ('Peak Memory (GB)', 'GB'), ('Efficiency (million images / W)', 'million images / W')]
 
     # Part 3 style: distinct color per config, hatch per environment
     cfg_color_map = {
@@ -281,7 +281,7 @@ def plot_vggt():
                for cfg in VGGT_CFGS for env in envs
                if f'{env}-{cfg_disp.get(cfg, cfg)}' in seen]
         plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5)
-        fname_base = metric.replace(' (mimg/W)', '').replace(' (', '_').replace(')', '').replace('/', '_').lower()
+        fname_base = metric.replace(' (million images / W)', '').replace(' (', '_').replace(')', '').replace('/', '_').lower()
         fname = f'vggt_{sanitize(fname_base)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)

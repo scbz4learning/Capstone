@@ -45,35 +45,35 @@
 
 ## 2. VGGT
 
-!!! warning "Incomplete Data"
-    iGPU results on Windows and WSL are incomplete. BF16 iGPU failed on both platforms (`RuntimeError: Input type (float) and bias type (c10::BF16) should be the same`). SDPA was not tested on Windows/WSL. iGPU-F32-Eager results on Windows/WSL were removed due to suspected data quality issues.
+!!! note "Data note"
+    Windows and WSL iGPU results are now included. WSL efficiency is computed from throughput divided by adjusted power.
 
-| Configuration | Environment | Latency (ms) | Throughput (img/s) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Efficiency (img/W) |
+| Configuration | Environment | Latency (ms) | Throughput (img/s) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Efficiency (million images / W) |
 |---|---|---|---|---|---|---|---|
 | **CPU-F32** | Windows-PyTorch | 192306.4 | 0.0104 | 43.73 | 9041.0 | 6.20 | 0.000238 |
-| | WSL-PyTorch | 327644.5 | 0.0061 | 43.05 | 17067.2 | 5.27 | - |
+| | WSL-PyTorch | 327644.5 | 0.0061 | 43.05 | 17067.2 | 5.27 | 0.000142 |
 | | Linux-PyTorch | 32687.5 | 0.0612 | 51.92 | 1755.9 | 6.14 | 0.0012 |
 | **CPU-BF16** | Windows-PyTorch | 39947.1 | 0.0501 | 50.43 | 2170.3 | 6.65 | 0.000993 |
-| | WSL-PyTorch | 54331.9 | 0.0368 | 42.65 | 2808.3 | 4.88 | - |
+| | WSL-PyTorch | 54331.9 | 0.0368 | 42.65 | 2808.3 | 4.88 | 0.000863 |
 | | Linux-PyTorch | 35774.6 | 0.0559 | 52.07 | 1917.4 | 5.29 | 0.0011 |
-| **iGPU-F32-Eager** | Windows-PyTorch | - | - | - | - | - | - |
-| | WSL-PyTorch | - | - | - | - | - | - |
+| **iGPU-F32-Eager** | Windows-PyTorch | 42494.5 | 0.0471 | 47.96 | 2179.6 | 5.19 | 0.0010 |
+| | WSL-PyTorch | 7119.6 | 0.2809 | 44.95 | 371.6 | 5.19 | 0.006249 |
 | | Linux-PyTorch | 43262.8 | 0.0462 | 48.34 | 2166.6 | 5.19 | 0.000956 |
 | **iGPU-F32-SDPA** | Linux-PyTorch | 45133.0 | 0.0443 | 47.16 | 2221.3 | 5.19 | 0.000940 |
-| | Windows-PyTorch | - | - | - | - | - | - |
-| | WSL-PyTorch | - | - | - | - | - | - |
+| | Windows-PyTorch | 44518.8 | 0.0449 | 46.95 | 2243.8 | 5.19 | 0.0010 |
+| | WSL-PyTorch | 9051.7 | 0.2210 | 44.39 | 465.2 | 5.19 | 0.004978 |
 | **iGPU-BF16-Eager** | Linux-PyTorch | 30321.9 | 0.0660 | 50.15 | 1585.1 | 2.71 | 0.0013 |
-| | Windows-PyTorch | - | - | - | - | - | - |
-| | WSL-PyTorch | - | - | - | - | - | - |
+| | Windows-PyTorch | 29950.1 | 0.0668 | 48.28 | 1544.8 | 2.71 | 0.0014 |
+| | WSL-PyTorch | 1596.6 | 1.2526 | 41.58 | 79.1 | 2.84 | 0.030124 |
 | **iGPU-BF16-SDPA** | Linux-PyTorch | 30303.0 | 0.0660 | 50.17 | 1580.6 | 2.71 | 0.0013 |
-| | Windows-PyTorch | - | - | - | - | - | - |
-| | WSL-PyTorch | - | - | - | - | - | - |
+| | Windows-PyTorch | 29963.6 | 0.0667 | 48.62 | 1545.1 | 2.71 | 0.0014 |
+| | WSL-PyTorch | 1558.2 | 1.2835 | 43.15 | 78.6 | 2.84 | 0.029747 |
 
 ### Charts
 
 ![VGGT Latency](../assets/profiling/vggt_latency_ms.png)
 
-![VGGT Throughput](../assets/profiling/vggt_throughput_img_per_s.png)
+![VGGT Throughput](../assets/profiling/vggt_throughput_img_s.png)
 
 ![VGGT Avg Power](../assets/profiling/vggt_avg_power_w.png)
 
@@ -81,7 +81,7 @@
 
 ![VGGT Peak Memory](../assets/profiling/vggt_peak_memory_gb.png)
 
-![VGGT Efficiency](../assets/profiling/vggt_efficiency_img_per_w.png)
+![VGGT Efficiency](../assets/profiling/vggt_efficiency.png)
 
 ---
 

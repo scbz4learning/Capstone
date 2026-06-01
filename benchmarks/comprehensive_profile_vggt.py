@@ -621,10 +621,13 @@ def run_wsl_host(config, args):
                 pwr_duration_s = end_p - start_p
                 energy_per_step_j = energy_j / max(1, config["execution"]["passes"]["power"]["num_test"])
                 avg_w_adjusted = max(0, avg_w - idle_power)
+                batch_throughput_img_per_sec = res.get("latency", {}).get("batch_throughput_img_per_sec", 0)
+                img_per_sec_watt = batch_throughput_img_per_sec / avg_w_adjusted if avg_w_adjusted > 0 else 0
 
                 res["power_energy"]["avg_total_adjusted_w"] = avg_w_adjusted
                 res["power_energy"]["avg_idle_w"] = round(idle_power, 2)
                 res["power_energy"]["energy_per_inference_j"] = energy_per_step_j
+                res["power_energy"]["img_per_sec_watt"] = img_per_sec_watt
                 res["power_energy"]["raw_energy_j"] = energy_j
                 res["power_energy"]["measurement_mode"] = "RAPL_Windows_WSL"
                 res["power_energy"]["note"] = f"Integrated from Host (dur: {pwr_duration_s:.2f}s, idle: {idle_power:.2f}W)"
