@@ -1,0 +1,122 @@
+[
+    {
+        "config": "cuda_float32_eager",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "latency_ms_mean": 42494.51426000001,
+            "latency_ms_p50": 42520.07835000012,
+            "latency_ms_p95": 42622.52948499997,
+            "batch_throughput_img_per_sec": 0.047064898489323256
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 47.96428275541779,
+            "avg_idle_w": 2.7,
+            "energy_per_inference_j": 2179.630027596414,
+            "img_per_sec_watt": 0.0009812488749038378,
+            "raw_energy_j": 21796.300275964142,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 5.1861982345581055,
+            "peak_mem_reserved_gb": 5.41796875,
+            "cuda_allocated_mb": 4841.8974609375,
+            "cuda_reserved_mb": 5548.0,
+            "cuda_peak_allocated_mb": 5310.6669921875,
+            "cuda_peak_reserved_mb": 5548.0,
+            "model_params_mb": 4793.31022644043
+        },
+        "timestamp": "2026-06-01T16:38:02.145337"
+    },
+    {
+        "config": "cuda_float32_sdpa",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "latency_ms_mean": 44518.764815000075,
+            "latency_ms_p50": 44524.18699999998,
+            "latency_ms_p95": 44715.59519500025,
+            "batch_throughput_img_per_sec": 0.044924876247377905
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 46.95330213778603,
+            "avg_idle_w": 2.87,
+            "energy_per_inference_j": 2243.8315592086665,
+            "img_per_sec_watt": 0.0009567990791264128,
+            "raw_energy_j": 22438.315592086663,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 5.187628269195557,
+            "peak_mem_reserved_gb": 5.646484375,
+            "cuda_allocated_mb": 4843.01953125,
+            "cuda_reserved_mb": 5782.0,
+            "cuda_peak_allocated_mb": 5312.13134765625,
+            "cuda_peak_reserved_mb": 5782.0,
+            "model_params_mb": 4793.31022644043
+        },
+        "timestamp": "2026-06-01T17:08:09.723386"
+    },
+    {
+        "config": "cuda_bfloat16_eager",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "latency_ms_mean": 29950.081900000056,
+            "latency_ms_p50": 29945.077650000258,
+            "latency_ms_p95": 30080.69993499978,
+            "batch_throughput_img_per_sec": 0.06677778066443273
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 48.27751423493862,
+            "avg_idle_w": 2.78,
+            "energy_per_inference_j": 1544.7749544496205,
+            "img_per_sec_watt": 0.0013832066899605489,
+            "raw_energy_j": 15447.749544496204,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 2.712203025817871,
+            "peak_mem_reserved_gb": 2.767578125,
+            "cuda_allocated_mb": 2446.5966796875,
+            "cuda_reserved_mb": 2834.0,
+            "cuda_peak_allocated_mb": 2777.2958984375,
+            "cuda_peak_reserved_mb": 2834.0,
+            "model_params_mb": 2396.655113220215
+        },
+        "timestamp": "2026-06-01T17:28:36.996941"
+    },
+    {
+        "config": "cuda_bfloat16_sdpa",
+        "status": "ok",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_Windows",
+        "latency": {
+            "latency_ms_mean": 29963.626005000016,
+            "latency_ms_p50": 29953.557249999903,
+            "latency_ms_p95": 30064.780429999475,
+            "batch_throughput_img_per_sec": 0.06674759589063957
+        },
+        "power_energy": {
+            "avg_total_adjusted_w": 48.61801287902325,
+            "avg_idle_w": 2.49,
+            "energy_per_inference_j": 1545.0800240588173,
+            "img_per_sec_watt": 0.0013728984781160919,
+            "raw_energy_j": 15450.800240588173,
+            "measurement_mode": "RAPL_Windows"
+        },
+        "memory": {
+            "peak_mem_allocated_gb": 2.710665702819824,
+            "peak_mem_reserved_gb": 2.8671875,
+            "cuda_allocated_mb": 2445.9912109375,
+            "cuda_reserved_mb": 2936.0,
+            "cuda_peak_allocated_mb": 2775.7216796875,
+            "cuda_peak_reserved_mb": 2936.0,
+            "model_params_mb": 2396.655113220215
+        },
+        "timestamp": "2026-06-01T17:49:00.241007"
+    }
+]
