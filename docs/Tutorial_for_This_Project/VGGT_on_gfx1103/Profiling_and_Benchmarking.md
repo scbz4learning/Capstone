@@ -1,6 +1,6 @@
 # Profiling & Benchmarking
 
-Profiling results for **VGGT-1B** (3D vision) on AMD Radeon 780M (gfx1103). See [Methodology](../../Profiling_Methodology.md) for hardware, software, and measurement details.
+Profiling results for **VGGT-1B** (3D vision) on AMD Radeon 780M (gfx1103). See [Methodology](../Profiling_Methodology.md) for hardware, software, and measurement details.
 
 ---
 

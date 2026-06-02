@@ -14,9 +14,9 @@ nav = [
         { "Architecture" = "General_Advice/Architecture.md" },
         { "Software Stack Quick Selection" = "General_Advice/Software_Stack_Quick_Selection.md" },
         { "Advice Per Device" = [
-            { "1 npu inference" = "General_Advice/Advice_Per_Device/1_npu-inference.md" },
-            { "2 gpu inference" = "General_Advice/Advice_Per_Device/2_gpu-inference.md" },
-            { "3 cpu inference" = "General_Advice/Advice_Per_Device/3_cpu-inference.md" }
+            { "NPU Inference" = "General_Advice/Advice_Per_Device/1_npu-inference.md" },
+            { "GPU Inference" = "General_Advice/Advice_Per_Device/2_gpu-inference.md" },
+            { "CPU Inference" = "General_Advice/Advice_Per_Device/3_cpu-inference.md" }
         ]},
         { "More Advice" = "General_Advice/More_Advice.md" }
     ]},
@@ -26,8 +26,8 @@ nav = [
         { "Profiling Methodology" = "Tutorial_for_This_Project/Profiling_Methodology.md" },
         { "SmolVLM On gfx1103" = [
             { "SmolVLM Overview" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/SmolVLM_Overview.md" },
-            { "PyTorch" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/PyTorch.md" },
             { "llama.cpp" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/llama.cpp.md" },
+            { "PyTorch" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/PyTorch.md" },
             { "Profiling and Benchmarking" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/Profiling_and_Benchmarking.md" }
         ]},
         { "VGGT On gfx1103" = [

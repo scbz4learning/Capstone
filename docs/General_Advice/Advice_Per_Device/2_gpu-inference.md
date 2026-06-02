@@ -93,7 +93,7 @@ See the **Driver Installation** section above.
 
 !!! info "Where to get help"
     Community ROCm is less stable and you may encounter various issues. For support, check:
-    - [Known Issues](../Appendix/known-issues.md)
+    - [Known Issues](../../Appendix/known-issues.md)
     - [Environment setup guide](https://github.com/ROCm/TheRock/blob/main/docs/environment_setup_guide.md)
     - [FAQ](https://github.com/ROCm/TheRock/blob/main/docs/faq.md)
     - [GitHub Issues](https://github.com/ROCm/TheRock/issues)
@@ -201,7 +201,7 @@ Before Dec 2025, ROCm required `export HSA_OVERRIDE_GFX_VERSION=11.0.0`. This is
 
 ##### Prerequisites
 
-1. Install latest [Adrenalin driver](../../Drivers/index.md)
+1. Install latest [Adrenalin driver](https://www.amd.com/en/products/software/adrenalin.html)
 2. Read [TheRock release guidance](https://github.com/ROCm/TheRock/blob/main/RELEASES.md)
 
 ##### ROCm Installation Paths
@@ -258,7 +258,7 @@ Supports Python 3.10-3.12 for Torch 2.9 & 2.10.
 
 ##### Known Issues
 
-See the dedicated known-issues appendix: [Known Issues](../Appendix/known-issues.md)
+See the dedicated known-issues appendix: [Known Issues](../../Appendix/known-issues.md)
 
 #### WSL2
 
