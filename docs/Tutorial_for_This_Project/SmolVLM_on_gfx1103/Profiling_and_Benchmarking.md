@@ -6,6 +6,20 @@ Profiling results for **SmolVLM** and **SmolVLM2** family on AMD Radeon 780M (gf
 
 ## 1. SmolVLM-Instruct (2.2B)
 
+### Charts
+
+![SmolVLM-Instruct TTFT (ms)](../../assets/profiling/smolvlm_instruct_ttft_ms.png)
+
+![SmolVLM-Instruct TPOT (ms)](../../assets/profiling/smolvlm_instruct_tpot_ms.png)
+
+![SmolVLM-Instruct Avg Power (W)](../../assets/profiling/smolvlm_instruct_avg_power_w.png)
+
+![SmolVLM-Instruct Energy per Inference (J)](../../assets/profiling/smolvlm_instruct_energy_per_inference_j.png)
+
+![SmolVLM-Instruct Peak Memory (GB)](../../assets/profiling/smolvlm_instruct_peak_memory_gb.png)
+
+![SmolVLM-Instruct Tokens per Joule](../../assets/profiling/smolvlm_instruct_tokens_per_joule.png)
+
 ### Raw Data
 
 | Dtype | Configuration | TTFT (ms) | TPOT (ms) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Tokens per Joule |
@@ -28,20 +42,6 @@ Profiling results for **SmolVLM** and **SmolVLM2** family on AMD Radeon 780M (gf
 | **Q4_K_M** | Linux-llama.cpp-CPU | 305.1 | 20.12 | 51.95 | 155.9 | 4.68 | 0.821 |
 | | Linux-llama.cpp-iGPU-Vulkan | 95.3 | 15.36 | 68.10 | 143.3 | 0.20 | 0.893 |
 | | Linux-llama.cpp-iGPU-ROCm | 295.7 | 20.10 | 105.2 | 308.9 | 4.68 | 0.414 |
-
-### Charts
-
-![SmolVLM-Instruct TTFT (ms)](../../assets/profiling/smolvlm_instruct_ttft_ms.png)
-
-![SmolVLM-Instruct TPOT (ms)](../../assets/profiling/smolvlm_instruct_tpot_ms.png)
-
-![SmolVLM-Instruct Avg Power (W)](../../assets/profiling/smolvlm_instruct_avg_power_w.png)
-
-![SmolVLM-Instruct Energy per Inference (J)](../../assets/profiling/smolvlm_instruct_energy_per_inference_j.png)
-
-![SmolVLM-Instruct Peak Memory (GB)](../../assets/profiling/smolvlm_instruct_peak_memory_gb.png)
-
-![SmolVLM-Instruct Tokens per Joule](../../assets/profiling/smolvlm_instruct_tokens_per_joule.png)
 
 ---
 

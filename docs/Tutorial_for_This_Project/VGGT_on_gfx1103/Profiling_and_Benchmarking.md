@@ -6,6 +6,20 @@ Profiling results for **VGGT-1B** (3D vision) on AMD Radeon 780M (gfx1103). See 
 
 ## 1. VGGT-1B
 
+### Charts
+
+![VGGT Latency (ms)](../../assets/profiling/vggt_latency_ms.png)
+
+![VGGT Throughput (img/s)](../../assets/profiling/vggt_throughput_img_s.png)
+
+![VGGT Avg Power (W)](../../assets/profiling/vggt_avg_power_w.png)
+
+![VGGT Energy per Inference (J)](../../assets/profiling/vggt_energy_per_inference_j.png)
+
+![VGGT Peak Memory (GB)](../../assets/profiling/vggt_peak_memory_gb.png)
+
+![VGGT Efficiency](../../assets/profiling/vggt_efficiency.png)
+
 ### Raw Data
 
 | Configuration | Environment | Latency (ms) | Throughput (img/s) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Efficiency (million images / W) |
@@ -28,23 +42,6 @@ Profiling results for **VGGT-1B** (3D vision) on AMD Radeon 780M (gfx1103). See 
 | **iGPU-BF16-SDPA** | Linux-PyTorch | 30303.0 | 0.0660 | 50.17 | 1580.6 | 2.71 | 0.0013 |
 | | Windows-PyTorch | 29963.6 | 0.0667 | 48.62 | 1545.1 | 2.71 | 0.0014 |
 | | WSL-PyTorch | 1558.2 | 1.2835 | 43.15 | 78.6 | 2.84 | 0.029747 |
-
-!!! note "Data note"
-    Windows and WSL iGPU results are included. WSL efficiency is computed from throughput divided by adjusted power.
-
-### Charts
-
-![VGGT Latency (ms)](../../assets/profiling/vggt_latency_ms.png)
-
-![VGGT Throughput (img/s)](../../assets/profiling/vggt_throughput_img_s.png)
-
-![VGGT Avg Power (W)](../../assets/profiling/vggt_avg_power_w.png)
-
-![VGGT Energy per Inference (J)](../../assets/profiling/vggt_energy_per_inference_j.png)
-
-![VGGT Peak Memory (GB)](../../assets/profiling/vggt_peak_memory_gb.png)
-
-![VGGT Efficiency](../../assets/profiling/vggt_efficiency.png)
 
 ---
 
