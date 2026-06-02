@@ -41,6 +41,33 @@ def extract_metrics(entry):
     metrics.update(extract_memory(entry))
     return metrics
 
+def extract_metrics_with_error(entry):
+    lat = entry.get('latency', {})
+    metrics = {}
+    errors = {}
+    if 'ttft_ms_mean' in lat:
+        metrics['TTFT (ms)'] = lat['ttft_ms_mean']
+        errors['TTFT (ms)'] = abs(lat.get('ttft_ms_p95', lat['ttft_ms_mean']) - lat['ttft_ms_mean'])
+        metrics['TPOT (ms)'] = lat['tpot_ms_mean']
+        errors['TPOT (ms)'] = abs(lat.get('tpot_ms_p95', lat['tpot_ms_mean']) - lat['tpot_ms_mean'])
+    if 'latency_ms_mean' in lat:
+        metrics['Latency (ms)'] = lat['latency_ms_mean']
+        errors['Latency (ms)'] = abs(lat.get('latency_ms_p95', lat['latency_ms_mean']) - lat['latency_ms_mean'])
+        metrics['Throughput (img/s)'] = lat.get('batch_throughput_img_per_sec', 0)
+    p = entry.get('power_energy', {})
+    metrics['Avg Power (W)'] = p.get('avg_total_adjusted_w', 0)
+    metrics['Energy per Inference (J)'] = p.get('energy_per_inference_j', 0)
+    if 'tokens_per_joule_p50' in p:
+        metrics['Tokens per Joule'] = p['tokens_per_joule_p50']
+    if 'img_per_sec_watt' in p and p.get('img_per_sec_watt', 0) > 0:
+        metrics['Efficiency (img/W)'] = p['img_per_sec_watt']
+    m = entry.get('memory', {})
+    if 'cpu_rss_mb' in m:
+        metrics['Peak Memory (GB)'] = m['cpu_rss_mb'] / 1024
+    else:
+        metrics['Peak Memory (GB)'] = m.get('peak_mem_allocated_gb', 0)
+    return metrics, errors
+
 smolvlm_pt_all = load_json('profiling_logs/smolvlm_pytorch.json')
 vggt_all = load_json('profiling_logs/vggt_pytorch.json')
 llamacpp_all = load_json('profiling_logs/smolvlm_llamacpp.json')
@@ -61,8 +88,19 @@ def load_llamacpp_data():
 llamacpp_records = load_llamacpp_data()
 
 def avg_metric(entries, metric_key):
-    vals = [extract_metrics(e).get(metric_key) for e in entries if extract_metrics(e).get(metric_key, 0) > 0]
-    return sum(vals) / len(vals) if vals else None
+    vals = []
+    errs = []
+    for e in entries:
+        m, err = extract_metrics_with_error(e)
+        v = m.get(metric_key)
+        if v is not None and v > 0:
+            vals.append(v)
+            errs.append(err.get(metric_key) if err.get(metric_key) is not None else 0)
+    if not vals:
+        return None, None
+    avg = sum(vals) / len(vals)
+    err = sum(errs) / len(errs) if errs else None
+    return avg, err
 
 SMOLVLM_PT_CFGS = ['cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_bfloat16_none']
 VGGT_CFGS = ['cuda_float32_eager', 'cuda_float32_sdpa', 'cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_float32_none', 'cpu_bfloat16_none']
@@ -75,7 +113,7 @@ ENV_HATCH = {'PyTorch': '', 'llama.cpp': '///'}
 def sanitize(s):
     return s.lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "_per_")
 
-def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5):
+def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5, errors=None):
     max_bars = max(len(g) for g in groups) if groups else 1
     width = 0.85 / max_bars
     positions, vals = [], []
@@ -85,10 +123,25 @@ def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10,
             positions.append(gpos + bi * width)
             vals.append(bar['value'] if bar['value'] is not None else 0)
 
-    colors = [bar.get('color', '#ccc') if bar['value'] is not None else '#ddd' for bar in sum(groups, [])]
+    flat_bars = sum(groups, [])
+    colors = [bar.get('color', '#ccc') if bar['value'] is not None else '#ddd' for bar in flat_bars]
+
     bars = ax.bar(positions, vals, width=width * 0.92, color=colors, alpha=0.85, edgecolor='black', linewidth=0.5)
 
-    for bar, bdict in zip(bars, sum(groups, [])):
+    if errors and any(e is not None for e in errors):
+        for i, (bar, err) in enumerate(zip(bars, errors)):
+            if err is not None:
+                ax.errorbar(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    bar.get_height(),
+                    yerr=err,
+                    fmt='none',
+                    ecolor='black',
+                    capsize=2,
+                    linewidth=0.8,
+                )
+
+    for bar, bdict in zip(bars, flat_bars):
         bar.set_hatch(bdict.get('hatch', ''))
         if bdict['value'] is None:
             bar.set_alpha(0.25)
@@ -186,6 +239,7 @@ def plot_smolvlm_instruct():
             bg = []
             for cfg_name in configs_in_group:
                 v = None
+                err = None
                 if 'PyTorch' in cfg_name:
                     parts = cfg_name.split('-')
                     env = parts[0]
@@ -194,14 +248,18 @@ def plot_smolvlm_instruct():
                     pt_cfg = pt_map.get(rest)
                     if pt_cfg:
                         entry = pt_data.get((model, pt_cfg, env))
-                        v = extract_metrics(entry).get(metric) if entry else None
+                        if entry:
+                            m, e = extract_metrics_with_error(entry)
+                            v = m.get(metric)
+                            err = e.get(metric)
                 else:
                     bk = 'cpu' if '-CPU' in cfg_name else ('vulkan' if 'Vulkan' in cfg_name else 'rocm')
                     quant = dtype_name
                     entries = llamacpp_records.get((model, bk, quant))
-                    v = avg_metric(entries, metric) if entries else None
+                    v, err = avg_metric(entries, metric) if entries else (None, None)
                 bg.append({
                     'value': v,
+                    'error': err,
                     'color': cfg_color.get(cfg_name, '#ccc'),
                     'hatch': cfg_hatch.get(cfg_name, ''),
                     'label': cfg_name,
@@ -209,9 +267,18 @@ def plot_smolvlm_instruct():
             groups.append(bg)
 
         from matplotlib.patches import Patch
-        all_cfgs = list(dict.fromkeys(sum(dtype_groups.values(), [])))  # unique, ordered
+        all_cfgs = list(dict.fromkeys(sum(dtype_groups.values(), [])))
         leg = [Patch(facecolor=cfg_color[c], hatch=cfg_hatch.get(c, ''), label=c) for c in all_cfgs]
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4)
+
+        err_vals = []
+        for g in groups:
+            for b in g:
+                if b['value'] is not None and b.get('error') is not None:
+                    err_vals.append(b['error'])
+                else:
+                    err_vals.append(None)
+
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4, errors=err_vals if any(v is not None for v in err_vals) else None)
         fname = f'smolvlm_instruct_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
@@ -254,14 +321,19 @@ def plot_vggt():
             for env in envs:
                 e = idx.get((cfg, env))
                 v = None
+                err = None
                 if e:
                     if 'Efficiency' in metric:
-                        raw = extract_metrics(e).get('Efficiency (img/W)')
+                        m = extract_metrics(e)
+                        raw = m.get('Efficiency (img/W)')
                         v = raw * 1000 if raw else None
                     else:
-                        v = extract_metrics(e).get(metric)
+                        m, er = extract_metrics_with_error(e)
+                        v = m.get(metric)
+                        err = er.get(metric)
                 bg.append({
                     'value': v,
+                    'error': err,
                     'color': cfg_color_map.get(cfg_disp.get(cfg, cfg), '#ccc'),
                     'hatch': env_hatch_map.get(env, ''),
                     'label': f'{env}-{cfg_disp.get(cfg, cfg)}',
@@ -280,7 +352,16 @@ def plot_vggt():
                      label=f'{env}-{cfg_disp.get(cfg, cfg)}')
                for cfg in VGGT_CFGS for env in envs
                if f'{env}-{cfg_disp.get(cfg, cfg)}' in seen]
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5)
+
+        err_vals = []
+        for g in groups:
+            for b in g:
+                if b['value'] is not None and b.get('error') is not None:
+                    err_vals.append(b['error'])
+                else:
+                    err_vals.append(None)
+
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5, errors=err_vals if any(v is not None for v in err_vals) else None)
         fname_base = metric.replace(' (million images / W)', '').replace(' (', '_').replace(')', '').replace('/', '_').lower()
         fname = f'vggt_{sanitize(fname_base)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
@@ -345,18 +426,36 @@ def plot_family():
             bg = []
             for bk, d in backend_dtypes:
                 v = None
+                err = None
                 if bk == 'PyTorch-iGPU-sdpa':
                     entry = pt_data.get((model, 'cuda_bfloat16_sdpa', 'Linux'))
-                    v = extract_metrics(entry).get(metric) if entry else None
+                    if entry:
+                        m, e = extract_metrics_with_error(entry)
+                        v = m.get(metric)
+                        err = e.get(metric)
                 else:
                     bk_short = bk.split('-')[1]  # 'cpu', 'vulkan', 'rocm'
                     entries = llamacpp_records.get((model, bk_short, d))
-                    v = avg_metric(entries, metric) if entries else None
+                    v, err = avg_metric(entries, metric) if entries else (None, None)
                 key = f'{bk}-{d}'
-                bg.append({'value': v, 'color': bar_colors.get(key, '#ccc'), 'hatch': bar_hatches.get(key, ''), 'label': key})
+                bg.append({
+                    'value': v,
+                    'error': err,
+                    'color': bar_colors.get(key, '#ccc'),
+                    'hatch': bar_hatches.get(key, ''),
+                    'label': key,
+                })
             groups.append(bg)
 
         from matplotlib.patches import Patch
+        err_vals = []
+        for g in groups:
+            for b in g:
+                if b['value'] is not None and b.get('error') is not None:
+                    err_vals.append(b['error'])
+                else:
+                    err_vals.append(None)
+
         leg = []
         seen = set()
         for bk, d in backend_dtypes:
@@ -365,7 +464,7 @@ def plot_family():
             if lbl not in seen:
                 seen.add(lbl)
                 leg.append(Patch(facecolor=bar_colors.get(key, '#ccc'), hatch=bar_hatches.get(key, ''), label=lbl))
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM family: {metric}', leg, fig_w=16, fig_h=5.5)
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None)
         fname = f'smolvlm_llamacpp_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
