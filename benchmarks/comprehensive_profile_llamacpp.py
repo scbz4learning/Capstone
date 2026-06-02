@@ -501,6 +501,91 @@ class UnifiedPowerMonitor:
             return avg_w
 
 
+class GpuMemoryMonitor:
+    """Monitor GPU VRAM usage via sysfs and/or rocm-smi.
+
+    Polls GPU memory in a background thread and tracks peak VRAM.
+    Used for discrete GPU backends (vulkan, ROCm) where the model
+    lives in GPU VRAM and CPU RSS is not representative.
+    """
+
+    def __init__(self, enable=True):
+        self.enable = enable
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.peak_vram_mb = 0
+        self.current_vram_mb = 0
+
+        self.vram_file = None
+        vram_used_files = glob.glob("/sys/class/drm/card*/device/mem_info_vram_used")
+        self.vram_file = vram_used_files[0] if vram_used_files else None
+
+        self.use_rocm_smi = False
+        if not self.vram_file:
+            try:
+                subprocess.run(["rocm-smi", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                self.use_rocm_smi = True
+                print("[Info] GPU memory monitor: using rocm-smi for VRAM polling.")
+            except FileNotFoundError:
+                pass
+
+        if not enable or (not self.vram_file and not self.use_rocm_smi):
+            self.enable = False
+            if enable and not self.vram_file and not self.use_rocm_smi:
+                print("[Warning] GPU memory monitor: neither sysfs nor rocm-smi found. VRAM will be 0.")
+
+    def _read_vram_mb(self):
+        try:
+            if self.vram_file:
+                with open(self.vram_file, "r") as f:
+                    return int(f.read().strip()) / (1024 * 1024)
+            elif self.use_rocm_smi:
+                res = subprocess.check_output(
+                    ["rocm-smi", "--showmeminfo", "vram", "--json"],
+                    stderr=subprocess.DEVNULL,
+                    timeout=5,
+                )
+                data = json.loads(res.decode("utf-8"))
+                total = 0
+                for card_id, info in data.items():
+                    for key in ("VRAM Total Used Memory (B)", "Used VRAM (B)", "vram_total_used_memory_b"):
+                        val_raw = info.get(key)
+                        if val_raw is not None and val_raw != "":
+                            total += int(float(val_raw))
+                            break
+                return total / (1024 * 1024)
+        except Exception:
+            pass
+        return 0
+
+    def _monitor(self):
+        while not self.stop_event.is_set():
+            vram = self._read_vram_mb()
+            if vram > 0:
+                self.current_vram_mb = vram
+                self.peak_vram_mb = max(self.peak_vram_mb, vram)
+            time.sleep(0.5)
+
+    def start(self):
+        self.peak_vram_mb = 0
+        self.current_vram_mb = 0
+        if self.enable:
+            self.peak_vram_mb = self._read_vram_mb()
+            self.current_vram_mb = self.peak_vram_mb
+            self.stop_event.clear()
+            self.thread = threading.Thread(target=self._monitor, daemon=True)
+            self.thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+        final = self._read_vram_mb()
+        self.peak_vram_mb = max(self.peak_vram_mb, final)
+        self.current_vram_mb = final
+        return self.peak_vram_mb
+
+
 # --- llama-server helpers ---
 def find_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -840,6 +925,14 @@ def profile_llamacpp(config, args):
             server_pid = server_proc.pid
             server_proc_mem = psutil.Process(server_pid) if server_pid else None
 
+            # === GPU memory monitor ===
+            # For discrete GPU backends (vulkan, ROCm), CPU RSS alone is not
+            # representative -- the model lives in GPU VRAM.  Poll VRAM via
+            # sysfs or rocm-smi throughout the latency + power measurements.
+            is_integrated = config["execution"].get("is_integrated", True)
+            gpu_mem_monitor = GpuMemoryMonitor(enable=not is_integrated)
+            gpu_mem_monitor.start()
+
             # === Latency ===
             ttft_list, tpot_list = [], []
             iter_timestamps = [time.perf_counter()]
@@ -881,7 +974,6 @@ def profile_llamacpp(config, args):
             mem_details = {"cpu_rss_mb": round(cpu_rss_mb, 2)}
 
             # === Power ===
-            is_integrated = config["execution"].get("is_integrated", True)
 
             if is_wsl_worker:
                 print(f"  Power: {NUM_TEST_POWER} iterations (WSL Worker Mode)...")
@@ -914,6 +1006,16 @@ def profile_llamacpp(config, args):
                 total_energy_j = metrics_data["total_energy_j"]
                 avg_power = metrics_data.get("avg_total_w", 0)
                 idle_power = monitor.measure_baseline(duration_s=10.0)
+
+            # Stop GPU memory monitor and capture peak VRAM
+            gpu_peak_vram_mb = gpu_mem_monitor.stop()
+
+            # Update memory section for discrete GPU backends: use GPU VRAM
+            # as the primary memory metric instead of CPU RSS.
+            if not is_integrated and gpu_peak_vram_mb > 0:
+                mem_details["gpu_vram_peak_mb"] = round(gpu_peak_vram_mb, 2)
+                peak_mem_allocated_gb = max(peak_mem_allocated_gb, round(gpu_peak_vram_mb / 1024, 2))
+                peak_mem_reserved_gb = peak_mem_allocated_gb
 
             avg_power_adjusted = max(0, avg_power - idle_power) if not is_wsl_worker else avg_power
 
