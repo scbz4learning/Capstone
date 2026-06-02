@@ -1,5 +1,8 @@
 # Known Issues
 
+!!! info "More issues"
+    More issues can be found in [Related_Links.md](Related_Links.md) under **Issues Related** section.
+
 ROCm support for **gfx1103** (Radeon 780M) is still in early stage. Bugs — both reproducible and intermittent — are common. Always check [TheRock issues](https://github.com/ROCm/TheRock/issues) for the latest status. Below are issues encountered during this project.
 
 ## 1. MIOpen FP16 Winograd Error
@@ -19,6 +22,16 @@ Composable Kernel (CK) support is not yet available for gfx1103 in the current R
 
 **Issue**: [TheRock #3905](https://github.com/ROCm/TheRock/issues/3905) — On Windows gfx110x, smoke tests fail with `Failed to retrieve GPU info: ERROR:ROCm is not available`. This is a CI/CD infrastructure issue affecting Azure runners.
 
-## 5. HIP_VISIBLE_DEVICES Workaround (Resolved)
+## 6. VGGT Conv Performance Degradation on Linux Native ROCm (gfx1103)
 
-On Windows, iGPU enumeration could fail with `HIP API error = 0100 "no ROCm-capable device is detected"`. This required setting `HIP_VISIBLE_DEVICES=0` to force the HIP runtime to recognize the iGPU. This appears to be **resolved** in recent ROCm releases — no workaround is needed.
+**Issue**: VGGT runs ~20× slower on native Linux ROCm (~30.3s/image) compared to WSL (~1.56s/image) with the same BF16-SDPA configuration.
+
+**Root Cause**: TheRock's MIOpen lacks optimized Conv kernels for `gfx1103`. The missing `.fdb.txt` kernel database causes `Conv2d`/`ConvTranspose2d` to fall back to slow software paths.
+
+**Scope**: Affects Conv-heavy models (VGGT, DPTHead). Transformer-heavy models (e.g. SmolVLM) are unaffected since their compute is dominated by GEMM/attention.
+
+**Workaround**:
+- Use WSL, where `librocdxg` provides access to the production Windows AMD driver with a complete kernel database
+- Use CPU inference on Linux as a fallback (~35.8s/image)
+
+**Reference**: See [VGGT Overview](../../Tutorial_for_This_Project/VGGT_on_gfx1103/VGGT_Overview.md) for deployment profiles.
