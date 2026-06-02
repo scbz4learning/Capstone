@@ -926,11 +926,13 @@ def profile_llamacpp(config, args):
             server_proc_mem = psutil.Process(server_pid) if server_pid else None
 
             # === GPU memory monitor ===
-            # For discrete GPU backends (vulkan, ROCm), CPU RSS alone is not
-            # representative -- the model lives in GPU VRAM.  Poll VRAM via
-            # sysfs or rocm-smi throughout the latency + power measurements.
-            is_integrated = config["execution"].get("is_integrated", True)
-            gpu_mem_monitor = GpuMemoryMonitor(enable=not is_integrated)
+            # Poll VRAM via sysfs or rocm-smi throughout the latency + power
+            # measurements.  On integrated GPUs the model weights are allocated
+            # through the GPU driver (dma-buf) and don't count toward the
+            # process RSS, so we need sysfs VRAM readings.
+            raw = config["execution"].get("is_integrated", True)
+            is_integrated = str(raw).lower() != "false"
+            gpu_mem_monitor = GpuMemoryMonitor(enable=True)
             gpu_mem_monitor.start()
 
             # === Latency ===
@@ -1010,9 +1012,9 @@ def profile_llamacpp(config, args):
             # Stop GPU memory monitor and capture peak VRAM
             gpu_peak_vram_mb = gpu_mem_monitor.stop()
 
-            # Update memory section for discrete GPU backends: use GPU VRAM
-            # as the primary memory metric instead of CPU RSS.
-            if not is_integrated and gpu_peak_vram_mb > 0:
+            # Use GPU VRAM as the primary memory metric (the model weights
+            # live in GPU-accessible memory regardless of integrated/discrete).
+            if gpu_peak_vram_mb > 0:
                 mem_details["gpu_vram_peak_mb"] = round(gpu_peak_vram_mb, 2)
                 peak_mem_allocated_gb = max(peak_mem_allocated_gb, round(gpu_peak_vram_mb / 1024, 2))
                 peak_mem_reserved_gb = peak_mem_allocated_gb

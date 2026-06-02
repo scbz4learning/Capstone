@@ -134,7 +134,7 @@ for backend in "${AVAILABLE_BACKENDS[@]}"; do
     "execution": {
         "device": "$backend",
         "quantizations": [$QUANTS_JSON],
-        "is_integrated": $(if [[ "$backend" == "cpu" ]]; then echo "true"; else echo "false"; fi),
+        "is_integrated": true,
         "sampling_randomness": false,
         "temperature": null,
         "passes": {
