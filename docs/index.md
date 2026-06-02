@@ -45,4 +45,16 @@ Results are heavily platform-dependent. On **WSL2**, the Windows GPU driver deli
 - **NPU (XDNA 1)** on this device cannot run transformer-based models — a documented hardware limitation.
 - The **ROCm backend** in llama.cpp draws roughly twice the power of CPU inference while delivering no speed advantage and should be avoided.
 - Many quantisation and compilation tools (AMD Quark, IREE, ONNX Runtime with MIGraphX) were evaluated but could not be deployed on this hardware configuration.
+
+## Next Steps
+
+1. **Documentation — General acceleration advice:** Expand the documentation to provide actionable guidance on selecting the right compute engine, quantization level, and deployment path for common robotics perception workloads on AMD Ryzen AI APUs.
+
+2. **Upstream contribution — llama.cpp SmolVLM-Instruct inference issues:** Investigate and contribute fixes upstream for any inference regressions or model compatibility issues encountered when running SmolVLM-Instruct through llama.cpp.
+
+3. **SmolVLM profiling on Windows and WSL:** Conduct detailed profiling of SmolVLM via llama.cpp across both native Windows and WSL2 environments to characterise throughput, latency, and power draw, building on the WSL2 vs. Linux observations from this project.
+
+4. **Quantized model accuracy testing:** Perform systematic accuracy evaluation of the quantized SmolVLM variants (e.g., FP16, Q4_K_M) against the full-precision baseline using relevant perception benchmarks.
+
+5. **Manual MLIR-AIE deployment:** Explore the manual deployment workflow using MLIR-AIE for models mapped to the NPU, as an alternative path for achieving NPU acceleration where standard runtimes fall short.
     
