@@ -50,7 +50,8 @@ nav = [
         ]}
     ]},
     { "Appendix" = [
-        { "known issues" = "Appendix/known-issues.md" }
+        { "Known Issues" = "Appendix/known-issues.md" },
+        { "Related Links" = "Appendix/Related_Links.md" }
     ]}
 ]
 
