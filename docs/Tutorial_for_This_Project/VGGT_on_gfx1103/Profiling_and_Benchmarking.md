@@ -2,6 +2,13 @@
 
 Profiling results for **VGGT-1B** (3D vision) on AMD Radeon 780M (gfx1103). See [Methodology](../Profiling_Methodology.md) for hardware, software, and measurement details.
 
+!!! warning "WSL vs Linux Performance Gap"
+    The dramatic gap between WSL and Linux GPU results is **not a Linux vs Windows OS issue**. Both use the same physical GPU (Radeon 780M). The difference is the GPU driver backend:
+    - **WSL**: Compute is bridged via [librocdxg](https://github.com/ROCm/librocdxg) to the **production Windows AMD driver** — full MIOpen Conv kernel support. `gfx1103` is officially supported since [librocdxg v1.2.0](https://github.com/ROCm/librocdxg/releases/tag/v1.2.0) (May 2026).
+    - **Linux**: Uses [TheRock](https://github.com/ROCm/TheRock) community ROCm build (early preview) — MIOpen kernel database is incomplete for `gfx1103`.
+    
+    This explains why Conv-heavy models (VGGT) are ~19× slower on Linux, while Transformer-heavy models (SmolVLM) show no difference.
+
 ---
 
 ## 1. VGGT-1B

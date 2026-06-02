@@ -27,11 +27,19 @@ Does your device have an NPU?
     │   [Radeon compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/compatibility.html)
     │   [Ryzen compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/compatibility.html)
     │   ├── Yes → Use official driver. Choose any inference framework that supports ROCm or Vulkan; results may vary by model
-    │   └── No → Check if any inference framework supports Vulkan for the model
-    │       ├── Yes → Use Vulkan to drive GPU inference
-    │       └── No → Try [TheRock](https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md) community build for GPU inference
-    │           Usually fine, even if slower
-    │           If missing or problematic — known issues on GitHub, or operators that are truly special → fall back to CPU
+    │   └── No → Do you have access to WSL2 (Windows Subsystem for Linux)?
+    │       ├── Yes → Use WSL2 with librocdxg (ROCm DXG bridge)
+    │       │   Routes GPU compute through the production-grade Windows AMD
+    │       │   driver. Often significantly faster than TheRock for Conv-heavy
+    │       │   models (e.g. VGGT: ~19× faster).
+    │       │   See: https://github.com/ROCm/librocdxg
+    │       │
+    │       └── No → Check if any inference framework supports Vulkan for the model
+    │           ├── Yes → Use Vulkan to drive GPU inference
+    │           └── No → Try [TheRock](https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md) community build for GPU inference
+    │               Usually fine, even if slower — but note: TheRock's MIOpen is
+    │               in early preview; Conv-heavy models may be significantly slower.
+    │               If missing or problematic → fall back to CPU
     │
     └── No → CPU inference — see [CPU Inference](../Architecture/3_cpu-inference.md)
         Recommended frameworks: ZenDNN, OpenVINO, llama.cpp

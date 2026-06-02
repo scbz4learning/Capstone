@@ -15,8 +15,12 @@ This project benchmarks **SmolVLM** (vision-language) and **VGGT** (3D vision) o
 | **Kernel** | 6.17.0 |
 | **ROCm** | 7.13.0a (TheRock community build) |
 
-!!! warning "No Official ROCm Support"
-    The Ryzen 7 8845HS is not officially supported by AMD ROCm. GPU driver uses the open-source `amdgpu` kernel module via TheRock.
+!!! warning "ROCm Support Status"
+    The Ryzen 7 8845HS is not officially supported by AMD ROCm for native Linux. GPU driver uses the open-source `amdgpu` kernel module via TheRock.
+
+    **However**, since [librocdxg v1.2.0](https://github.com/ROCm/librocdxg/releases/tag/v1.2.0) (May 2026), the WSL2 GPU passthrough path is **officially supported** — `gfx1103` is in librocdxg's supported device list.
+
+    **Important for model selection**: On native Linux, TheRock's MIOpen (convolution library) has incomplete kernel databases for `gfx1103`. In contrast, WSL2 uses [librocdxg](https://github.com/ROCm/librocdxg) to bridge GPU compute to the production-grade Windows AMD driver, which ships with a complete MIOpen kernel database. This causes a dramatic performance gap for Conv-heavy models (see VGGT results below), while Transformer-heavy models (SmolVLM) see no difference.
 
 ---
 

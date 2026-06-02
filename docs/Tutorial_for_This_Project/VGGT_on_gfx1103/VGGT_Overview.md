@@ -12,7 +12,16 @@ VGGT (Visual Geometry Group Transformer) is a feed-forward model developed by Fa
 | **ONNX Runtime** | ❌ Not recommended | No automated export tool works. Community exports exist but have fixed dimensions and inefficiency issues |
 
 !!! warning "WSL vs Linux Performance Anomaly"
-    VGGT runs **~20× faster on WSL** than native Linux iGPU for the same BF16-SDPA config (~1.56s vs ~30.3s per image). This is driven by Windows GPU driver Conv support. If WSL is available, it is the preferred host environment. Self-hosted Linux will be CPU-bound at ~30s/image.
+    VGGT runs **~20× faster on WSL** than native Linux iGPU for the same BF16-SDPA config (~1.56s vs ~30.3s per image).
+
+    **Root cause**: The performance gap stems from the GPU driver stack, not the OS itself:
+
+    - **Linux** uses [TheRock](https://github.com/ROCm/TheRock), a community ROCm build in **early preview** — its MIOpen (convolution kernel library) lacks optimized Conv kernels for `gfx1103`. The missing `.fdb.txt` kernel database causes Conv2d/ConvTranspose2d to fall back to slow software paths.
+    - **WSL** uses [librocdxg](https://github.com/ROCm/librocdxg) to bridge GPU compute to the **production-grade Windows AMD driver**, which ships with a complete MIOpen kernel database. Since [v1.2.0](https://github.com/ROCm/librocdxg/releases/tag/v1.2.0) (May 2026), `gfx1103` is officially supported.
+
+    This gap is most pronounced for **Conv-heavy models** like VGGT (DPTHead uses many Conv2d/ConvTranspose2d layers). Transformer-heavy models (e.g. SmolVLM) see no difference because their compute is dominated by GEMM and attention, not convolutions.
+
+    If WSL is available, it is the preferred host environment for Conv-heavy models on `gfx1103`. Self-hosted Linux will be CPU-bound at ~30s/image.
 
 !!! tip "Deployment Profile"
     - **WSL** (BF16, iGPU, SDPA): **~1.56s/image, ~2.84GB memory**, highest throughput

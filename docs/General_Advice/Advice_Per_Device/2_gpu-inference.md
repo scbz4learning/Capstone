@@ -10,11 +10,21 @@ Official driver
 [Radeon compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/compatibility.html)
 [Ryzen compatibility matrices](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityryz/compatibility.html)
 ├── Yes → Use official driver. Choose any inference framework that supports ROCm or Vulkan; results may vary by model
-└── No → Check if any inference framework supports Vulkan for the model
-    ├── Yes → Use Vulkan to drive GPU inference
-    └── No → Try TheRock (https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md) community build for GPU inference
-        Usually fine, even if slower
-        If missing or problematic — known issues on GitHub, or operators that are truly special → fall back to CPU
+└── No → Do you have access to WSL2 (Windows Subsystem for Linux)?
+    ├── Yes → Use WSL2 with librocdxg (ROCm DXG bridge)
+    │   WSL2 routes GPU compute through the Windows AMD driver,
+    │   which has production-level kernel support (especially for Conv ops).
+    │   See: https://github.com/ROCm/librocdxg
+    │   Usually faster than native Linux for Conv-heavy models.
+    │
+    └── No → Check if any inference framework supports Vulkan for the model
+        ├── Yes → Use Vulkan to drive GPU inference
+        └── No → Try TheRock (https://github.com/ROCm/TheRock/blob/main/SUPPORTED_GPUS.md) community build for GPU inference
+            Usually fine, even if slower — but note: TheRock's MIOpen
+            (convolution kernel library) is in early preview and may lack
+            optimized Conv kernels, causing significant slowdowns for
+            Conv-heavy models (e.g. VGGT sees ~19× slowdown vs WSL).
+            If missing or problematic — known issues on GitHub, or operators that are truly special → fall back to CPU
 ```
 
 ---
@@ -262,11 +272,10 @@ See the dedicated known-issues appendix: [Known Issues](../../Appendix/known-iss
 
 #### WSL2
 
-Since January 2026, Radeon has **production-level support** for WSL2.
+Since January 2026, Radeon has **production-level support** for WSL2. As of [librocdxg v1.2.0](https://github.com/ROCm/librocdxg/releases/tag/v1.2.0) (May 2026), `gfx1103` and `gfx1152` are officially supported in the supported device list.
 
-!!! info "WSL ROCm support status"
-    For the latest WSL ROCm/DXG interop support status, see:
-    - [WSL ROCm DXG docs](https://github.com/ROCm/TheRock/blob/main/docs/development/wsl_rocdxg.md)
+!!! tip "Why WSL2 can be faster than native Linux"
+    WSL2 uses [librocdxg](https://github.com/ROCm/librocdxg) to bridge ROCm/HIP compute calls to the **production-grade Windows AMD driver** via DXCore/DXG. In contrast, native Linux on unsupported GPUs relies on TheRock's MIOpen, which is in early preview and may have incomplete convolution kernel databases. This means Conv-heavy models (e.g. VGGT) can be ~19× faster on WSL2, while Transformer-heavy models (e.g. SmolVLM) show no difference. See the detailed [GPU Driver Stack Analysis](../../Experience_For_Developers/Per_Device/GPU.md) for the full technical breakdown.
 
 ##### Reference Documentation
 
@@ -328,7 +337,8 @@ to CPU inference.
 |------|-----------|-------------|
 | ROCm (Official) | Production | Device in AMD compatibility tables |
 | Vulkan | Production | No ROCm, but Vulkan-capable driver available |
-| TheRock | Community | Device not officially supported; headless Linux |
+| WSL2 (librocdxg) | Production (Windows driver) | Device not officially supported; Windows host available. Routes ROCm through production AMD Windows driver via DXG bridge — often significantly faster than TheRock for Conv-heavy models |
+| TheRock | Community | Device not officially supported; headless Linux only; no Windows host available |
 | CPU | Baseline | No GPU acceleration path available |
 
-The recommended priority is: **ROCm → Vulkan → TheRock → CPU**.
+The recommended priority is: **ROCm → Vulkan → WSL2 (librocdxg) → TheRock → CPU**.
