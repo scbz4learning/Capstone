@@ -88,7 +88,7 @@ No significant difference because convolution is not on the critical path.
 ### You have access to Windows + WSL2
 - **Preferred path for Conv-heavy models** (VGGT, CNN-based detectors, segmentation models)
 - Install WSL2 + librocdxg + ROCm PyTorch nightlies
-- See [GPU Inference guide](../General_Advice/Advice_Per_Device/2_gpu-inference.md#wsl2) for installation steps
+- See [GPU Inference guide](../../General_Advice/Advice_Per_Device/2_gpu-inference.md#wsl2) for installation steps
 
 ### You only have headless Linux
 - TheRock is your only GPU option

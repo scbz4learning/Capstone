@@ -1,7 +1,7 @@
 [project]
 
-site_name = "Accelerating Robotics Perception on AMD Ryzen AI APU"
-site_description = "A new project generated from the default template project."
+site_name = "Accelerating Robotics Perception on AMD Ryzen AI APU: A Comparative Port and Benchmark of VGGT and SmolVLM Across Three Compute Engines, CPU/IGPU/NPU"
+site_description = "Systematic benchmarking of VGGT and SmolVLM across CPU and iGPU on AMD Ryzen AI APU, providing deployment guidance for edge robotics perception."
 site_author = "Bokai Sun"
 
 copyright = """

@@ -25,34 +25,24 @@ We focus on two models:
 - VGGT
 - SmolVLM
 
-## Experimental Platform
+## Key Findings
 
-The experiments are conducted on a compact edge device:
+Deploying modern AI perception models on edge hardware is not just about the hardware itself — the software stack and driver support matter enormously. This project benchmarks two representative models across the CPU and iGPU of an AMD Ryzen 7 8845HS APU (Radeon 780M, gfx1103):
 
-**Beelink SER Mini PC**
+- **SmolVLM** — a lightweight vision-language model for multimodal scene understanding
+- **VGGT** — a vision-only transformer for 3D geometry estimation
 
-- AMD Ryzen 7 8845HS  
-- 32 GB RAM  
-- 1 TB SSD
+### For Vision-Language Models (SmolVLM)
 
-!!! note "Experimental Device Constraints"
-    - This device has **no official ROCm support**; it relies on **community ROCm support** via [TheRock](https://github.com/ROCm/TheRock)
+The clear recommendation is **llama.cpp with FP16 quantisation and the Vulkan backend**. This achieves ~116 ms time-to-first-token — roughly **60× faster** than running through PyTorch on the same GPU — while using only 0.20 GB of memory and introducing no accuracy loss. A faster but lower-accuracy option (Q4_K_M, ~95 ms) exists for latency-critical tasks. The older SmolVLM model is replaced by **SmolVLM2-2.2B-Instruct**, which needs no workaround to run and achieves the same speed, making it the preferred choice for production use.
 
-## Document Structure
+### For 3D Vision Models (VGGT)
 
-This documentation is organized as follows:
+Results are heavily platform-dependent. On **WSL2**, the Windows GPU driver delivers roughly **20× faster** inference than on native Linux (~1.6 s vs. ~30 s per image). The culprit is incomplete convolutional operator support in the community ROCm build for gfx1103 on Linux, not the model itself. On WSL, VGGT becomes viable for near-real-time 3D reconstruction; on Linux, CPU inference is almost as fast as GPU (~36 s vs. ~30 s) and requires far less setup.
 
-1. **Architecture & Framework Selection** → [`docs/architecture/`](architecture/)    
-    - General overview of the AMD software stack (ROCm, Ryzen AI, Vulkan, ONNX Runtime, IREE, ...)  
-    - Decision guide for selecting hardware, framework, and OS based on your setup  
+### Important Caveats
 
-2. **Hands-on Guides (SmolVLM & VGGT)** → [`docs/smolvlm/`](smolvlm/) and [`docs/vggt/`](vggt/)    
-    - Step-by-step environment setup for Ubuntu and Windows  
-    - Model introductions and example inference code  
-    - Known issues and workarounds (NPU VLM unsupported, limited LLM support)
-
-3. **Profiling & Benchmarking** → [`docs/profiling/`](profiling/)
-    - Comprehensive performance profiling results across platforms (Windows, WSL, Ubuntu)
-    - Detailed latency, throughput, power consumption, and memory usage metrics
-    - Platform comparison and recommendations
-    - Performance optimization insights    
+- **NPU (XDNA 1)** on this device cannot run transformer-based models — a documented hardware limitation.
+- The **ROCm backend** in llama.cpp draws roughly twice the power of CPU inference while delivering no speed advantage and should be avoided.
+- Many quantisation and compilation tools (AMD Quark, IREE, ONNX Runtime with MIGraphX) were evaluated but could not be deployed on this hardware configuration.
+    
