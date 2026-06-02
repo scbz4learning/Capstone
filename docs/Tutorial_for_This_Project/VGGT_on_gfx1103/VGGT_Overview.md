@@ -4,6 +4,13 @@ VGGT (Visual Geometry Group Transformer) is a feed-forward model developed by Fa
 
 ---
 
+## Update Log
+
+- **[May 15, 2026]** We fixed an implementation issue that was keeping redundant intermediate tensors in memory. With the same GPU memory budget, VGGT can now run on roughly 2-3x more input frames! See [VGGT-Omega](https://vggt-omega.github.io/) for more details.
+
+    !!! note "Note"
+        On our hardware, this change was not very noticeable — the WSL deployment advantage far outweighs the frames-per-memory gains.
+
 ## Framework Recommendation
 
 | Framework | Recommendation | Reason |
