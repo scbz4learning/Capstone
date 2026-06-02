@@ -1,4 +1,4 @@
-# Accelerating Robotics Perception on AMD Ryzen AI APU
+# Accelerating Robotics Perception on AMD Ryzen AI APU: A Comparative Port and Benchmark of VGGT and SmolVLM Across Three Compute Engines, CPU/IGPU/NPU
 
 ## COMP5709 Capstone Project — University of Sydney
 
