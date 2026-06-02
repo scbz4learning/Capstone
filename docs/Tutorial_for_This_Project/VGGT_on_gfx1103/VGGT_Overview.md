@@ -1,6 +1,33 @@
-# VGGT
+# VGGT Overview
 
 VGGT (Visual Geometry Group Transformer) is a feed-forward model developed by Facebook Research for **3D visual perception** — estimating camera parameters, depth maps, and point maps from a set of input images. Unlike generative VLMs, VGGT is a **discriminative 3D reconstruction model**, making it a different class of perception model.
+
+---
+
+## Framework Recommendation
+
+| Framework | Recommendation | Reason |
+|-----------|---------------|--------|
+| **PyTorch** | ✅ Recommended | Only fully supported option. Official code + BF16 adaptation available. Use **BF16 + SDPA** for best inference speed. |
+| **ONNX Runtime** | ❌ Not recommended | No automated export tool works. Community exports exist but have fixed dimensions and inefficiency issues |
+
+!!! warning "WSL vs Linux Performance Anomaly"
+    VGGT runs **~20× faster on WSL** than native Linux iGPU for the same BF16-SDPA config (~1.56s vs ~30.3s per image). This is driven by Windows GPU driver Conv support. If WSL is available, it is the preferred host environment. Self-hosted Linux will be CPU-bound at ~30s/image.
+
+!!! tip "Deployment Profile"
+    - **WSL** (BF16, iGPU, SDPA): **~1.56s/image, ~2.84GB memory**, highest throughput
+    - **Linux** (BF16, iGPU, SDPA): **~30.3s/image, ~2.71GB memory**, self-hosted fallback
+    - **Linux** (BF16, CPU): **~35.8s/image, ~5.3GB memory**, viable on memory-constrained hosts
+
+---
+
+## Key Profiling Chart
+
+The following chart shows throughput relative to the best configuration (WSL iGPU-BF16-SDPA).
+
+![VGGT Throughput ratio](../../assets/profiling/vggt_throughput_ratio.png)
+
+---
 
 ## Transformer Usage
 
@@ -9,13 +36,6 @@ VGGT uses Vision Transformer (ViT) architecture but in a way that differs from s
 - The model processes multiple images jointly in a single forward pass, rather than autoregressively generating tokens
 - The transformer is used for spatial understanding across image pairs, not for text generation
 - This non-standard usage means that many general-purpose inference frameworks (vLLM, ONNX Runtime, etc.) **do not support VGGT out of the box**
-
-## Framework Recommendation
-
-| Framework | Recommendation | Reason |
-|-----------|---------------|--------|
-| **PyTorch** | ✅ Recommended | Only fully supported option. Official code + BF16 adaptation available |
-| **ONNX Runtime** | ❌ Not recommended | No automated export tool works. Community exports exist but have fixed dimensions and inefficiency issues |
 
 ## PyTorch Notes
 

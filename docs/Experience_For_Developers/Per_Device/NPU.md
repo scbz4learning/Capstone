@@ -1,4 +1,4 @@
-# Developer Guide: NPU Support on AMD Ryzen AI
+# NPU Support on AMD Ryzen AI
 
 NPU support for XDNA 1 (X1) architecture is currently in **early development stage**. This guide covers the key projects and resources for developers looking to work with the AMD NPU.
 

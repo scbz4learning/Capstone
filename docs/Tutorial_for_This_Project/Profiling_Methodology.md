@@ -1,4 +1,4 @@
-# Testing Methodology
+# Profiling Methodology
 
 ## Hardware Platform
 

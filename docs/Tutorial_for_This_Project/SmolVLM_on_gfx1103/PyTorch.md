@@ -1,4 +1,4 @@
-# Pytorch
+# PyTorch
 
 ## install dependencies
 

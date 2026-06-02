@@ -1,4 +1,4 @@
-# pytorch
+# PyTorch
 
 ## clone / submodule add vggt
 

@@ -10,43 +10,48 @@ Copyright &copy; 2026 Bokai Sun
 
 nav = [
     { "Accelerating Robotics Perception on AMD Ryzen AI APU" = "index.md" },
-    { "Architecture" = [
-        { "Overview" = ["Architecture/index.md"] },
-        { "NPU Inference" = "Architecture/1_npu-inference.md" },
-        { "GPU Inference" = "Architecture/2_gpu-inference.md" },
-        { "CPU Inference" = "Architecture/3_cpu-inference.md" },
-        { "Inference Frameworks" = [
-            { "PyTorch" = "Architecture/Inference_Frameworks/pytorch.md" },
-            { "ONNX Runtime" = "Architecture/Inference_Frameworks/onnxruntime.md" }
+    { "General Advice" = [
+        { "Architecture" = "General_Advice/Architecture.md" },
+        { "Software Stack Quick Selection" = "General_Advice/Software_Stack_Quick_Selection.md" },
+        { "Advice Per Device" = [
+            { "1 npu inference" = "General_Advice/Advice_Per_Device/1_npu-inference.md" },
+            { "2 gpu inference" = "General_Advice/Advice_Per_Device/2_gpu-inference.md" },
+            { "3 cpu inference" = "General_Advice/Advice_Per_Device/3_cpu-inference.md" }
+        ]},
+        { "More Advice" = "General_Advice/More_Advice.md" }
+    ]},
+    { "Tutorial For This Project" = [
+        { "Overview" = "Tutorial_for_This_Project/Overview.md" },
+        { "Prerequisite" = "Tutorial_for_This_Project/Prerequisite.md" },
+        { "Profiling Methodology" = "Tutorial_for_This_Project/Profiling_Methodology.md" },
+        { "SmolVLM On gfx1103" = [
+            { "SmolVLM Overview" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/SmolVLM_Overview.md" },
+            { "PyTorch" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/PyTorch.md" },
+            { "llama.cpp" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/llama.cpp.md" },
+            { "Profiling and Benchmarking" = "Tutorial_for_This_Project/SmolVLM_on_gfx1103/Profiling_and_Benchmarking.md" }
+        ]},
+        { "VGGT On gfx1103" = [
+            { "VGGT Overview" = "Tutorial_for_This_Project/VGGT_on_gfx1103/VGGT_Overview.md" },
+            { "PyTorch" = "Tutorial_for_This_Project/VGGT_on_gfx1103/PyTorch.md" },
+            { "Profiling and Benchmarking" = "Tutorial_for_This_Project/VGGT_on_gfx1103/Profiling_and_Benchmarking.md" }
         ]}
     ]},
-    { "Environment Setup" = [
-        { "Prerequisite" = ["Environment_Setup/Prerequisite/index.md"] },
-        { "Drivers" = ["Environment_Setup/Drivers/index.md"] },
-        { "Accelerated Backends" = [
-            { "ROCm" = "Environment_Setup/Accelerated_Backends/rocm/index.md" },
-            { "Vulkan" = "Environment_Setup/Accelerated_Backends/vulkan/index.md" },
-            { "Ryzen AI" = "Environment_Setup/Accelerated_Backends/ryzen-ai/index.md" }
+    { "Experience For Developers" = [
+        { "Per Device" = [
+            { "NPU" = "Experience_For_Developers/Per_Device/NPU.md" }
+        ]},
+        { "Per Inference Framework" = [
+            { "pytorch" = "Experience_For_Developers/Per_Inference_Framework/pytorch.md" },
+            { "onnxruntime" = "Experience_For_Developers/Per_Inference_Framework/onnxruntime.md" },
+            { "iree" = "Experience_For_Developers/Per_Inference_Framework/iree.md" }
+        ]},
+        { "More Advice" = [
+            { "quantization" = "Experience_For_Developers/More_Advice/quantization.md" }
         ]}
     ]},
-    { "SmoLVLM" = [
-        { "Overview" = ["smolvlm/index.md"] },
-        { "PyTorch" = "smolvlm/0.pytorch.md" }
-    ] },
-    { "VGGT" = [
-        { "Overview" = ["vggt/index.md"] },
-        { "PyTorch" = "vggt/0.pytorch.md" }
-    ] },
-    { "Profiling & Benchmarking" = [
-        { "Overview" = ["Profiling/index.md"] }
-    ] },
     { "Appendix" = [
-        { "Known Issues" = "Appendix/known-issues.md" },
-        { "Developer Guide" = [
-            { "Overview" = ["Appendix/developer-guide/index.md"] },
-            { "IREE" = "Appendix/developer-guide/iree.md" }
-        ] }
-    ] }
+        { "known issues" = "Appendix/known-issues.md" }
+    ]}
 ]
 
 [project.theme]
