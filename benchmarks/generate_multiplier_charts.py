@@ -9,9 +9,102 @@ matplotlib.rcParams['font.size'] = 7
 output_dir = Path('benchmark_charts_ratio')
 output_dir.mkdir(exist_ok=True)
 
+METRIC_DIRECTION = {
+    'TTFT (ms)': 'lower is better',
+    'TPOT (ms)': 'lower is better',
+    'Latency (ms)': 'lower is better',
+    'Avg Power (W)': 'lower is better',
+    'Energy per Inference (J)': 'lower is better',
+    'Peak Memory (GB)': 'lower is better',
+    'Throughput (img/s)': 'higher is better',
+    'Tokens per Joule': 'higher is better',
+    'Efficiency (img/W)': 'higher is better',
+    'Efficiency (million images / W)': 'higher is better',
+}
+
+FALLBACK_FOOTNOTE = "* ROCm fell back to CPU execution on this device.\nDirection: lower is better →← | higher is better →→"
+
 def load_json(path):
     with open(path, 'r') as f:
         return json.load(f)
+
+def get_effective_device(entry):
+    """Determine if data was actually collected on GPU or CPU fallback.
+
+    - Vulkan (llama.cpp): always real GPU execution -> 'gpu'
+    - ROCm: if gpu_vram < 200MB, the model ran on CPU (ROCm fallback) -> 'cpu'
+    - PyTorch cuda on integrated: if gpu_vram < 200MB -> 'cpu'
+    - Otherwise -> 'cpu'
+    """
+    config = entry.get('config', '')
+    backend = config.split('_', 1)[0] if '_' in config else config
+
+    if backend == 'vulkan':
+        return 'gpu'
+
+    m = entry.get('memory', {})
+    gpu_vram_mb = m.get('gpu_vram_peak_mb', 0)
+
+    if backend == 'rocm':
+        if gpu_vram_mb < 200:
+            return 'cpu'
+        return 'gpu'
+
+    is_integrated = entry.get('is_integrated', False)
+    if is_integrated:
+        if gpu_vram_mb < 200:
+            return 'cpu'
+        return 'gpu'
+
+    return 'cpu'
+
+# Color map: same semantic = same color across all charts
+CFG_COLORS = {
+    # PyTorch CPU variants (all envs)
+    'Windows-PyTorch-CPU': '#d62728',
+    'WSL-PyTorch-CPU': '#d62728',
+    'Linux-PyTorch-CPU': '#d62728',
+    # PyTorch iGPU-Eager variants
+    'Windows-PyTorch-iGPU-Eager': '#ff7f0e',
+    'WSL-PyTorch-iGPU-Eager': '#ff7f0e',
+    'Linux-PyTorch-iGPU-Eager': '#ff7f0e',
+    # PyTorch iGPU-SDPA variants
+    'Windows-PyTorch-iGPU-SDPA': '#bcbd22',
+    'WSL-PyTorch-iGPU-SDPA': '#bcbd22',
+    'Linux-PyTorch-iGPU-SDPA': '#bcbd22',
+    # llama.cpp CPU
+    'Linux-llama.cpp-CPU': '#2ca02c',
+    # llama.cpp Vulkan (real GPU)
+    'Linux-llama.cpp-iGPU-Vulkan': '#17becf',
+    # llama.cpp ROCm
+    'Linux-llama.cpp-iGPU-ROCm': '#1f77b4',
+    # VGGT configs
+    'CPU-F32': '#d62728',
+    'CPU-BF16': '#ff7f0e',
+    'iGPU-F32-Eager': '#bcbd22',
+    'iGPU-F32-SDPA': '#2ca02c',
+    'iGPU-BF16-Eager': '#17becf',
+    'iGPU-BF16-SDPA': '#1f77b4',
+}
+
+def get_color_for_label(label):
+    """Return rainbow color for a given bar label based on semantic meaning."""
+    # Exact match first
+    if label in CFG_COLORS:
+        return CFG_COLORS[label]
+    # Family ratio labels (f'{model}\nbackend-quant')
+    if '\n' in label:
+        kind = label.split('\n', 1)[1]
+        if kind == 'PyTorch-bf16':
+            return '#ff7f0e'
+        if kind.startswith('cpu-'):
+            return '#d62728'
+        if kind.startswith('vulkan-'):
+            return '#17becf'
+        if kind.startswith('rocm-'):
+            return '#1f77b4'
+    # Fallback: return gray
+    return '#cccccc'
 
 # ── Load data ──
 smolvlm_pt = load_json('profiling_logs/smolvlm_pytorch.json')
@@ -112,11 +205,13 @@ for key, entry in smolvlm_pt_instruct.items():
     })
 for key, entry in smolvlm_lcpp_instruct.items():
     display = LCPP_CFG_DISPLAY.get(key, key)
+    is_fallback = get_effective_device(entry) == 'cpu'
     SMOLVLM_ALL_CFGS.append({
-        'label': display,
+        'label': display + (' *' if is_fallback else ''),
         'ttft': get_ttft(entry),
         'tpot': get_tpot(entry),
         'energy': get_energy(entry),
+        'is_fallback': is_fallback,
     })
 
 # Best f16 values (used as 1.0x baseline)
@@ -161,7 +256,7 @@ best_vggt_efficiency = max(get_efficiency(e) for e in vggt_bf16_entries)
 print(f'VGGT BF16 baseline: Throughput={best_vggt_throughput:.4f} img/s Efficiency={best_vggt_efficiency:.2f} million/W')
 
 # ── Chart helpers ──
-def make_bar_chart(configs, metric_key, ylabel, title, fname):
+def make_bar_chart(configs, metric_key, ylabel, title, fname, footnote=None):
     valid = [(c, c[metric_key]) for c in configs if c[metric_key] is not None]
     valid.sort(key=lambda x: x[1])
     labels = [c['label'] for c, _ in valid]
@@ -181,12 +276,15 @@ def make_bar_chart(configs, metric_key, ylabel, title, fname):
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.1f}x', ha='left', va='center', fontsize=6)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
+    if footnote:
+        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=7,
+                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
     fig.tight_layout()
     fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f'  Generated: {fname}')
 
-def make_vggt_bar_chart(configs, envs, metric_extractor, ylabel, title, fname, best_val):
+def make_vggt_bar_chart(configs, envs, metric_extractor, ylabel, title, fname, best_val, footnote=None):
     entries = []
     for cfg in configs:
         for env in envs:
@@ -224,6 +322,9 @@ def make_vggt_bar_chart(configs, envs, metric_extractor, ylabel, title, fname, b
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.2f}x', ha='left', va='center', fontsize=5)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
+    if footnote:
+        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=7,
+                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
     fig.tight_layout()
     fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
     plt.close(fig)
@@ -237,21 +338,15 @@ TTFT_DATA = [{'label': c['label'], 'ttft_mult': c['ttft'] / best_ttft}
 TTFT_DATA.sort(key=lambda x: x['ttft_mult'])
 make_bar_chart(TTFT_DATA, 'ttft_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: TTFT (BF16 best={best_ttft:.0f}ms)',
-               'smolvlm_instruct_ttft_ratio.png')
+               'smolvlm_instruct_ttft_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
-TPOT_DATA = [{'label': c['label'], 'tpot_mult': c['tpot'] / best_tpot}
-             for c in SMOLVLM_ALL_CFGS if c['tpot']]
-TPOT_DATA.sort(key=lambda x: x['tpot_mult'])
 make_bar_chart(TPOT_DATA, 'tpot_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: TPOT (BF16 best={best_tpot:.1f}ms)',
-               'smolvlm_instruct_tpot_ratio.png')
+               'smolvlm_instruct_tpot_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
-ENERGY_DATA = [{'label': c['label'], 'energy_mult': c['energy'] / best_energy}
-               for c in SMOLVLM_ALL_CFGS if c['energy']]
-ENERGY_DATA.sort(key=lambda x: x['energy_mult'])
 make_bar_chart(ENERGY_DATA, 'energy_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: Energy per Inference (BF16 best={best_energy:.0f}J)',
-               'smolvlm_instruct_energy_ratio.png')
+               'smolvlm_instruct_energy_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
 # ── VGGT Charts (all configs) ──
 print('\nVGGT charts:')
@@ -259,12 +354,12 @@ print('\nVGGT charts:')
 make_vggt_bar_chart(VGGT_ALL_CFGS, VGGT_ENVS,
                     get_throughput, 'Multiplier (relative to best BF16)',
                     f'VGGT: Throughput (BF16 best={best_vggt_throughput:.4f} img/s)',
-                    'vggt_throughput_ratio.png', best_vggt_throughput)
+                    'vggt_throughput_ratio.png', best_vggt_throughput, footnote=FALLBACK_FOOTNOTE)
 
 make_vggt_bar_chart(VGGT_ALL_CFGS, VGGT_ENVS,
                     get_efficiency, 'Multiplier (relative to best BF16)',
                     f'VGGT: Efficiency (BF16 best={best_vggt_efficiency:.2f} million/W)',
-                    'vggt_efficiency_ratio.png', best_vggt_efficiency)
+                    'vggt_efficiency_ratio.png', best_vggt_efficiency, footnote=FALLBACK_FOOTNOTE)
 
 # ── SmolVLM Family: ALL configs across all models, ratio vs baseline ──
 print('\nSmolVLM family ALL configs ratio charts:')
@@ -273,10 +368,10 @@ ALL_MODELS = ['SmolVLM-256M-Instruct', 'SmolVLM-500M-Instruct', 'SmolVLM-Instruc
               'SmolVLM2-256M-Video-Instruct', 'SmolVLM2-500M-Video-Instruct', 'SmolVLM2-2.2B-Instruct']
 
 DTYPE_COLORS = {
-    'bf16': '#1f77b4',
-    'f16': '#ff7f0e',
-    'Q8_0': '#2ca02c',
     'Q4_K_M': '#d62728',
+    'Q8_0': '#ff7f0e',
+    'f16': '#bcbd22',
+    'bf16': '#2ca02c',
 }
 
 BASELINE_TTFT = 115.57379999999998   # SmolVLM-Instruct | llama.cpp-vulkan | f16
@@ -318,17 +413,20 @@ for e in smolvlm_lcpp:
     lat = e.get('latency', {})
     pe = e.get('power_energy', {})
     mem = e.get('memory', {})
-    mem_gb = mem.get('cpu_rss_mb', 0) / 1024 if 'cpu_rss_mb' in mem else mem.get('vram_gb', mem.get('peak_mem_allocated_gb', 0))
-    tj = pe.get('tokens_per_joule_p50')
+    peak_gb = mem.get('peak_mem_allocated_gb', 0)
+    if peak_gb == 0:
+        peak_gb = mem.get('cpu_rss_mb', 0) / 1024
+    is_fallback = get_effective_device(e) == 'cpu'
     all_family_entries.append({
-        'label': f'{model}\n{backend}-{quant}',
+        'label': f"{model}\n{backend}-{quant}{' *' if is_fallback else ''}",
         'ttft': lat.get('ttft_ms_mean'),
         'tpot': lat.get('tpot_ms_mean'),
         'energy': pe.get('energy_per_inference_j'),
         'dtype': quant,
+        'is_fallback': is_fallback,
     })
 
-def make_family_ratio_chart(metric, ylabel, title, fname):
+def make_family_ratio_chart(metric, ylabel, title, fname, footnote=None):
     valid = [e for e in all_family_entries if e[metric] is not None]
     baseline_map = {'ttft': BASELINE_TTFT, 'tpot': BASELINE_TPUT, 'energy': BASELINE_ENERGY}
     baseline = baseline_map[metric]
@@ -351,8 +449,10 @@ def make_family_ratio_chart(metric, ylabel, title, fname):
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.2f}x', ha='left', va='center', fontsize=5)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
+    if any(e.get('is_fallback', False) for e in valid):
+        fig.text(0.99, 0.01, FALLBACK_FOOTNOTE, transform=fig.transFigure, fontsize=7,
+                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
 
-    # Legend
     from matplotlib.patches import Patch
     legend_patches = [Patch(facecolor=DTYPE_COLORS[dt], label=dt) for dt in ['bf16', 'f16', 'Q8_0', 'Q4_K_M']]
     fig.legend(handles=legend_patches, loc='upper left', bbox_to_anchor=(1.0, 1), fontsize=7, ncol=1)
@@ -364,14 +464,14 @@ def make_family_ratio_chart(metric, ylabel, title, fname):
 
 make_family_ratio_chart('ttft', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — TTFT',
-                        'smolvlm_family_dtype_ttft_ratio.png')
+                        'smolvlm_family_dtype_ttft_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
 make_family_ratio_chart('tpot', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — TPOT',
-                        'smolvlm_family_dtype_tpot_ratio.png')
+                        'smolvlm_family_dtype_tpot_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
 make_family_ratio_chart('energy', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — Energy',
-                        'smolvlm_family_dtype_energy_ratio.png')
+                        'smolvlm_family_dtype_energy_ratio.png', footnote=FALLBACK_FOOTNOTE)
 
 print(f'\nDone → {output_dir.absolute()}')

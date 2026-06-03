@@ -7,9 +7,87 @@ from collections import defaultdict
 output_dir = Path('benchmark_charts')
 output_dir.mkdir(exist_ok=True)
 
+METRIC_DIRECTION = {
+    'TTFT (ms)': 'lower is better',
+    'TPOT (ms)': 'lower is better',
+    'Latency (ms)': 'lower is better',
+    'Avg Power (W)': 'lower is better',
+    'Energy per Inference (J)': 'lower is better',
+    'Peak Memory (GB)': 'lower is better',
+    'Throughput (img/s)': 'higher is better',
+    'Tokens per Joule': 'higher is better',
+    'Efficiency (img/W)': 'higher is better',
+    'Efficiency (million images / W)': 'higher is better',
+}
+
+FALLBACK_FOOTNOTE = "* ROCm fell back to CPU execution on this device.\nDirection: lower is better →← | higher is better →→"
+
+# Rainbow colors: Red > Orange > Yellow > Green > Cyan > Blue > Purple
+# Same color = same execution target (across all charts)
+CFG_COLORS_BY_SEMANTICS = {
+    # PyTorch CPU (all envs)
+    'Windows-PyTorch-CPU': '#d62728',
+    'WSL-PyTorch-CPU': '#d62728',
+    'Linux-PyTorch-CPU': '#d62728',
+    # PyTorch iGPU-Eager (all envs)
+    'Windows-PyTorch-iGPU-Eager': '#ff7f0e',
+    'WSL-PyTorch-iGPU-Eager': '#ff7f0e',
+    'Linux-PyTorch-iGPU-Eager': '#ff7f0e',
+    # PyTorch iGPU-SDPA (all envs)
+    'Windows-PyTorch-iGPU-SDPA': '#bcbd22',
+    'WSL-PyTorch-iGPU-SDPA': '#bcbd22',
+    'Linux-PyTorch-iGPU-SDPA': '#bcbd22',
+    # llama.cpp CPU
+    'Linux-llama.cpp-CPU': '#2ca02c',
+    # llama.cpp Vulkan (real GPU)
+    'Linux-llama.cpp-iGPU-Vulkan': '#17becf',
+    # llama.cpp ROCm
+    'Linux-llama.cpp-iGPU-ROCm': '#1f77b4',
+}
+
+# VGGT semantic colors (matching rainbow scheme)
+VGGT_CFG_COLORS_BY_SEMANTICS = {
+    'CPU-F32': '#d62728',        # Red
+    'CPU-BF16': '#d62728',       # Red (CPU)
+    'iGPU-F32-Eager': '#ff7f0e', # Orange (PyTorch iGPU eager / BF16)
+    'iGPU-F32-SDPA': '#bcbd22',  # Yellow (PyTorch iGPU SDPA)
+    'iGPU-BF16-Eager': '#ff7f0e', # Orange (PyTorch iGPU eager / BF16)
+    'iGPU-BF16-SDPA': '#1f77b4', # Blue (llama.cpp ROCm / VGGT iGPU-BF16-SDPA)
+}
+
 def load_json(path):
     with open(path, 'r') as f:
         return json.load(f)
+
+def get_effective_device(entry):
+    """Determine if data was actually collected on GPU or CPU fallback.
+
+    - Vulkan (llama.cpp): always real GPU execution -> 'gpu'
+    - ROCm: if gpu_vram < 200MB, the model ran on CPU (ROCm fallback) -> 'cpu'
+    - PyTorch cuda on integrated: if gpu_vram < 200MB -> 'cpu'
+    - Otherwise -> 'cpu'
+    """
+    config = entry.get('config', '')
+    backend = config.split('_', 1)[0] if '_' in config else config
+
+    if backend == 'vulkan':
+        return 'gpu'
+
+    m = entry.get('memory', {})
+    gpu_vram_mb = m.get('gpu_vram_peak_mb', 0)
+
+    if backend == 'rocm':
+        if gpu_vram_mb < 200:
+            return 'cpu'
+        return 'gpu'
+
+    is_integrated = entry.get('is_integrated', False)
+    if is_integrated:
+        if gpu_vram_mb < 200:
+            return 'cpu'
+        return 'gpu'
+
+    return 'cpu'
 
 def extract_latency(entry):
     lat = entry.get('latency', {})
@@ -30,9 +108,10 @@ def extract_power(entry):
 
 def extract_memory(entry):
     m = entry.get('memory', {})
-    if 'cpu_rss_mb' in m:
-        return {'Peak Memory (GB)': m['cpu_rss_mb'] / 1024}
-    return {'Peak Memory (GB)': m.get('peak_mem_allocated_gb', 0)}
+    peak_gb = m.get('peak_mem_allocated_gb', 0)
+    if peak_gb > 0:
+        return {'Peak Memory (GB)': peak_gb}
+    return {'Peak Memory (GB)': m.get('cpu_rss_mb', 0) / 1024}
 
 def extract_metrics(entry):
     metrics = {}
@@ -62,10 +141,11 @@ def extract_metrics_with_error(entry):
     if 'img_per_sec_watt' in p and p.get('img_per_sec_watt', 0) > 0:
         metrics['Efficiency (img/W)'] = p['img_per_sec_watt']
     m = entry.get('memory', {})
-    if 'cpu_rss_mb' in m:
-        metrics['Peak Memory (GB)'] = m['cpu_rss_mb'] / 1024
+    peak_gb = m.get('peak_mem_allocated_gb', 0)
+    if peak_gb > 0:
+        metrics['Peak Memory (GB)'] = peak_gb
     else:
-        metrics['Peak Memory (GB)'] = m.get('peak_mem_allocated_gb', 0)
+        metrics['Peak Memory (GB)'] = m.get('cpu_rss_mb', 0) / 1024
     return metrics, errors
 
 smolvlm_pt_all = load_json('profiling_logs/smolvlm_pytorch.json')
@@ -90,17 +170,20 @@ llamacpp_records = load_llamacpp_data()
 def avg_metric(entries, metric_key):
     vals = []
     errs = []
+    is_fallback = False
     for e in entries:
         m, err = extract_metrics_with_error(e)
         v = m.get(metric_key)
         if v is not None and v > 0:
             vals.append(v)
             errs.append(err.get(metric_key) if err.get(metric_key) is not None else 0)
+        if not is_fallback and get_effective_device(e) == 'cpu':
+            is_fallback = True
     if not vals:
-        return None, None
+        return None, None, False
     avg = sum(vals) / len(vals)
     err = sum(errs) / len(errs) if errs else None
-    return avg, err
+    return avg, err, is_fallback
 
 SMOLVLM_PT_CFGS = ['cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_bfloat16_none']
 VGGT_CFGS = ['cuda_float32_eager', 'cuda_float32_sdpa', 'cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_float32_none', 'cpu_bfloat16_none']
@@ -113,7 +196,7 @@ ENV_HATCH = {'PyTorch': '', 'llama.cpp': '///'}
 def sanitize(s):
     return s.lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "_per_")
 
-def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5, errors=None):
+def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5, errors=None, footnote=None):
     max_bars = max(len(g) for g in groups) if groups else 1
     width = 0.85 / max_bars
     positions, vals = [], []
@@ -167,6 +250,9 @@ def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10,
     fig.tight_layout(rect=[0, 0, 1.0, 1])
     if legend_handles:
         fig.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1.0, 1), fontsize=6, ncol=1)
+    if footnote:
+        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=6,
+                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
 
 # ── 1. SmoVLM-Instruct ──
 def plot_smolvlm_instruct():
@@ -193,12 +279,7 @@ def plot_smolvlm_instruct():
     }
 
     # Part 3 style: distinct color per device-framework, hatch per environment
-    cfg_color = {
-        'Windows-PyTorch-CPU': '#1f77b4', 'WSL-PyTorch-CPU': '#1f77b4', 'Linux-PyTorch-CPU': '#1f77b4',
-        'Windows-PyTorch-iGPU-Eager': '#ff7f0e', 'WSL-PyTorch-iGPU-Eager': '#ff7f0e', 'Linux-PyTorch-iGPU-Eager': '#ff7f0e',
-        'Windows-PyTorch-iGPU-SDPA': '#2ca02c', 'WSL-PyTorch-iGPU-SDPA': '#2ca02c', 'Linux-PyTorch-iGPU-SDPA': '#2ca02c',
-        'Linux-llama.cpp-CPU': '#8c564b', 'Linux-llama.cpp-iGPU-Vulkan': '#9467bd', 'Linux-llama.cpp-iGPU-ROCm': '#e377c2',
-    }
+    cfg_color = CFG_COLORS_BY_SEMANTICS
     cfg_hatch = {
         'Windows-PyTorch-CPU': '', 'WSL-PyTorch-CPU': '//', 'Linux-PyTorch-CPU': 'xx',
         'Windows-PyTorch-iGPU-Eager': '', 'WSL-PyTorch-iGPU-Eager': '//', 'Linux-PyTorch-iGPU-Eager': 'xx',
@@ -256,19 +337,32 @@ def plot_smolvlm_instruct():
                     bk = 'cpu' if '-CPU' in cfg_name else ('vulkan' if 'Vulkan' in cfg_name else 'rocm')
                     quant = dtype_name
                     entries = llamacpp_records.get((model, bk, quant))
-                    v, err = avg_metric(entries, metric) if entries else (None, None)
+                    v, err, fallback = avg_metric(entries, metric) if entries else (None, None, False)
                 bg.append({
                     'value': v,
                     'error': err,
                     'color': cfg_color.get(cfg_name, '#ccc'),
                     'hatch': cfg_hatch.get(cfg_name, ''),
-                    'label': cfg_name,
+                    'label': cfg_name + (' *' if fallback else ''),
                 })
             groups.append(bg)
 
         from matplotlib.patches import Patch
         all_cfgs = list(dict.fromkeys(sum(dtype_groups.values(), [])))
-        leg = [Patch(facecolor=cfg_color[c], hatch=cfg_hatch.get(c, ''), label=c) for c in all_cfgs]
+        leg = []
+        for c in all_cfgs:
+            lbl = c
+            if 'llama.cpp' in c and 'ROCm' in c and 'CPU' not in c:
+                bk = 'rocm'
+                if 'f16' in c: quant = 'f16'
+                elif 'Q8_0' in c: quant = 'Q8_0'
+                elif 'Q4_K_M' in c: quant = 'Q4_K_M'
+                else: quant = None
+                if quant:
+                    entries = llamacpp_records.get((model, bk, quant))
+                    if entries and any(get_effective_device(e) == 'cpu' for e in entries):
+                        lbl = c + ' *'
+            leg.append(Patch(facecolor=cfg_color[c], hatch=cfg_hatch.get(c, ''), label=lbl))
 
         err_vals = []
         for g in groups:
@@ -278,7 +372,7 @@ def plot_smolvlm_instruct():
                 else:
                     err_vals.append(None)
 
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4, errors=err_vals if any(v is not None for v in err_vals) else None)
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
         fname = f'smolvlm_instruct_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
@@ -304,12 +398,8 @@ def plot_vggt():
     metrics = [('Latency (ms)', 'ms'), ('Throughput (img/s)', 'img/s'), ('Avg Power (W)', 'W'),
                ('Energy per Inference (J)', 'J'), ('Peak Memory (GB)', 'GB'), ('Efficiency (million images / W)', 'million images / W')]
 
-    # Part 3 style: distinct color per config, hatch per environment
-    cfg_color_map = {
-        'CPU-F32': '#1f77b4', 'CPU-BF16': '#ff7f0e',
-        'iGPU-F32-Eager': '#2ca02c', 'iGPU-F32-SDPA': '#d62728',
-        'iGPU-BF16-Eager': '#9467bd', 'iGPU-BF16-SDPA': '#8c564b',
-    }
+    # Rainbow colors: Red > Orange > Yellow > Green > Cyan > Blue > Purple
+    cfg_color_map = VGGT_CFG_COLORS_BY_SEMANTICS
     env_hatch_map = {'Windows': '', 'WSL': '//', 'Linux': 'xx'}
 
     for metric, unit in metrics:
@@ -361,7 +451,7 @@ def plot_vggt():
                 else:
                     err_vals.append(None)
 
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5, errors=err_vals if any(v is not None for v in err_vals) else None)
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
         fname_base = metric.replace(' (million images / W)', '').replace(' (', '_').replace(')', '').replace('/', '_').lower()
         fname = f'vggt_{sanitize(fname_base)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
@@ -394,10 +484,10 @@ def plot_family():
 
     # Color per backend+dtype using a map
     bar_colors = {
-        'PyTorch-iGPU-sdpa': '#1f77b4',
-        'llama.cpp-cpu-f16': '#8c564b', 'llama.cpp-cpu-Q8_0': '#8c564b', 'llama.cpp-cpu-Q4_K_M': '#8c564b',
-        'llama.cpp-vulkan-f16': '#9467bd', 'llama.cpp-vulkan-Q8_0': '#9467bd', 'llama.cpp-vulkan-Q4_K_M': '#9467bd',
-        'llama.cpp-rocm-f16': '#e377c2', 'llama.cpp-rocm-Q8_0': '#e377c2', 'llama.cpp-rocm-Q4_K_M': '#e377c2',
+        'PyTorch-iGPU-sdpa': '#bcbd22',
+        'llama.cpp-cpu-f16': '#2ca02c', 'llama.cpp-cpu-Q8_0': '#2ca02c', 'llama.cpp-cpu-Q4_K_M': '#2ca02c',
+        'llama.cpp-vulkan-f16': '#17becf', 'llama.cpp-vulkan-Q8_0': '#17becf', 'llama.cpp-vulkan-Q4_K_M': '#17becf',
+        'llama.cpp-rocm-f16': '#1f77b4', 'llama.cpp-rocm-Q8_0': '#1f77b4', 'llama.cpp-rocm-Q4_K_M': '#1f77b4',
     }
     bar_hatches = {
         'PyTorch-iGPU-sdpa': '',
@@ -436,14 +526,14 @@ def plot_family():
                 else:
                     bk_short = bk.split('-')[1]  # 'cpu', 'vulkan', 'rocm'
                     entries = llamacpp_records.get((model, bk_short, d))
-                    v, err = avg_metric(entries, metric) if entries else (None, None)
+                    v, err, fallback = avg_metric(entries, metric) if entries else (None, None, False)
                 key = f'{bk}-{d}'
                 bg.append({
                     'value': v,
                     'error': err,
                     'color': bar_colors.get(key, '#ccc'),
                     'hatch': bar_hatches.get(key, ''),
-                    'label': key,
+                    'label': key + (' *' if fallback else ''),
                 })
             groups.append(bg)
 
@@ -463,8 +553,13 @@ def plot_family():
             lbl = f'{bk} ({d})'
             if lbl not in seen:
                 seen.add(lbl)
+                if bk != 'PyTorch-iGPU-sdpa':
+                    bk_short = bk.split('-')[1]
+                    entries = llamacpp_records.get(('SmolVLM-Instruct', bk_short, d))
+                    if entries and any(get_effective_device(e) == 'cpu' for e in entries):
+                        lbl = lbl + ' *'
                 leg.append(Patch(facecolor=bar_colors.get(key, '#ccc'), hatch=bar_hatches.get(key, ''), label=lbl))
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None)
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
         fname = f'smolvlm_llamacpp_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
