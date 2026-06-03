@@ -157,6 +157,62 @@ def integrate_power_trace(samples, window_start=None, window_end=None):
     return energy_j, avg_power_w
 
 
+class CpuMemoryMonitor:
+    """Monitor CPU RSS of a specific PID in a background thread.
+
+    Tracks peak RSS throughout the profiling window, replacing the
+    single-endpoint sampling that misses transient peaks.
+    """
+
+    def __init__(self, pid, interval_s=0.5):
+        self.pid = pid
+        self.interval_s = interval_s
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.peak_rss_mb = 0.0
+        self.current_rss_mb = 0.0
+        self._proc = None
+
+    def _sample_rss_mb(self):
+        try:
+            if self._proc is None:
+                self._proc = psutil.Process(self.pid)
+            mem_info = self._proc.memory_info()
+            return mem_info.rss / (1024**2)
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            return None
+
+    def _monitor(self):
+        while not self.stop_event.is_set():
+            rss_mb = self._sample_rss_mb()
+            if rss_mb is not None:
+                self.current_rss_mb = rss_mb
+                self.peak_rss_mb = max(self.peak_rss_mb, rss_mb)
+            time.sleep(self.interval_s)
+
+    def start(self):
+        self.peak_rss_mb = 0.0
+        self.current_rss_mb = 0.0
+        self._proc = None
+        rss_mb = self._sample_rss_mb()
+        if rss_mb is not None:
+            self.current_rss_mb = rss_mb
+            self.peak_rss_mb = rss_mb
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self._monitor, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        if self.thread:
+            self.thread.join(timeout=1.0)
+        rss_mb = self._sample_rss_mb()
+        if rss_mb is not None:
+            self.current_rss_mb = rss_mb
+            self.peak_rss_mb = max(self.peak_rss_mb, rss_mb)
+        return self.peak_rss_mb
+
+
 # --- Power Backends ---
 class PowerBackend:
     def start(self): pass
@@ -761,11 +817,13 @@ def profile_vggt(config, args):
 
             print()
 
-            with torch.no_grad():
-                cpu_mem_start = get_cpu_mem_gb()
-                if dev_name == "cuda":
-                    torch.cuda.reset_peak_memory_stats()
+            # === Memory monitors ===
+            cpu_mem_monitor = CpuMemoryMonitor(pid=os.getpid(), interval_s=0.5)
+            cpu_mem_monitor.start()
+            if dev_name == "cuda":
+                torch.cuda.reset_peak_memory_stats()
 
+            with torch.no_grad():
                 print(f"Latency: {NUM_TEST_LATENCY} iterations...")
                 for i in range(NUM_TEST_LATENCY):
                     print(f"  Latency run {i+1}/{NUM_TEST_LATENCY}...", end="\r", flush=True)
@@ -778,14 +836,17 @@ def profile_vggt(config, args):
                     latency_ms = (time.perf_counter() - t0) * 1000
                     latency_list.append(latency_ms)
 
+            peak_cpu_rss_mb = cpu_mem_monitor.stop()
+
             if dev_name == "cuda":
                 peak_mem_allocated_gb = torch.cuda.max_memory_allocated() / (1024**3)
                 peak_mem_reserved_gb = torch.cuda.max_memory_reserved() / (1024**3)
             else:
-                cpu_mem_end = get_cpu_mem_gb()
-                peak_mem_allocated_gb = max(cpu_mem_end - cpu_mem_start, 0.1)
+                peak_mem_allocated_gb = peak_cpu_rss_mb / 1024
                 peak_mem_reserved_gb = peak_mem_allocated_gb
             mem_details = analyze_memory_details(dev_name, model)
+            if "cpu_rss_mb" not in mem_details:
+                mem_details["cpu_rss_mb"] = round(peak_cpu_rss_mb, 2)
 
             is_integrated = config["execution"].get("is_integrated", False)
 
