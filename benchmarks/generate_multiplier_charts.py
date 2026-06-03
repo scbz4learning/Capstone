@@ -1,4 +1,5 @@
 import json
+from matplotlib.patches import Patch
 import matplotlib.pyplot as plt
 import matplotlib
 from pathlib import Path
@@ -22,7 +23,12 @@ METRIC_DIRECTION = {
     'Efficiency (million images / W)': 'higher is better',
 }
 
-FALLBACK_FOOTNOTE = "* ROCm fell back to CPU execution on this device.\nDirection: lower is better →← | higher is better →→"
+def make_footnote(metric):
+    direction = METRIC_DIRECTION.get(metric)
+    base = "* ROCm fell back to CPU execution on this device."
+    if direction:
+        return f"{base}\nDirection: {direction}"
+    return base
 
 def load_json(path):
     with open(path, 'r') as f:
@@ -80,21 +86,32 @@ CFG_COLORS = {
     'Linux-llama.cpp-iGPU-ROCm': '#1f77b4',
     # VGGT configs
     'CPU-F32': '#d62728',
-    'CPU-BF16': '#ff7f0e',
-    'iGPU-F32-Eager': '#bcbd22',
-    'iGPU-F32-SDPA': '#2ca02c',
-    'iGPU-BF16-Eager': '#17becf',
-    'iGPU-BF16-SDPA': '#1f77b4',
+    'CPU-BF16': '#d62728',
+    'iGPU-F32-Eager': '#ff7f0e',
+    'iGPU-F32-SDPA': '#bcbd22',
+    'iGPU-BF16-Eager': '#ff7f0e',
+    'iGPU-BF16-SDPA': '#bcbd22',
 }
 
 def get_color_for_label(label):
     """Return rainbow color for a given bar label based on semantic meaning."""
-    # Exact match first
-    if label in CFG_COLORS:
-        return CFG_COLORS[label]
-    # Family ratio labels (f'{model}\nbackend-quant')
-    if '\n' in label:
-        kind = label.split('\n', 1)[1]
+    base = label.replace(' *', '')  # strip fallback marker
+    if base in CFG_COLORS:
+        return CFG_COLORS[base]
+    if base.startswith('Linux-llama.cpp-'):
+        parts = base[len('Linux-llama.cpp-'):].rsplit('-', 1)
+        if len(parts) == 2 and parts[1] in ('f16', 'Q8_0', 'Q4_K_M'):
+            base = 'Linux-llama.cpp-' + parts[0]
+    if base in CFG_COLORS:
+        return CFG_COLORS[base]
+    if 'PyTorch' in base and 'CPU' in base:
+        return '#d62728'
+    if 'PyTorch' in base and 'Eager' in base:
+        return '#ff7f0e'
+    if 'PyTorch' in base and 'SDPA' in base:
+        return '#bcbd22'
+    if '\n' in base:
+        kind = base.split('\n', 1)[1]
         if kind == 'PyTorch-bf16':
             return '#ff7f0e'
         if kind.startswith('cpu-'):
@@ -103,8 +120,18 @@ def get_color_for_label(label):
             return '#17becf'
         if kind.startswith('rocm-'):
             return '#1f77b4'
-    # Fallback: return gray
     return '#cccccc'
+
+def get_hatch_for_label(label):
+    """Return hatch pattern for a given bar label based on platform."""
+    base = label.replace(' *', '')
+    if 'Windows' in base:
+        return 'xx'
+    elif 'WSL' in base:
+        return '//'
+    elif 'Linux' in base:
+        return ''
+    return ''
 
 # ── Load data ──
 smolvlm_pt = load_json('profiling_logs/smolvlm_pytorch.json')
@@ -243,6 +270,8 @@ VGGT_ENV_COLORS = {
     'Windows': '#1f77b4', 'WSL': '#ff7f0e', 'Linux': '#2ca02c',
 }
 
+VGGT_ENV_HATCH = {'Windows': '', 'WSL': '//', 'Linux': 'xx'}
+
 # Best BF16 VGGT values
 vggt_bf16_entries = []
 for cfg in ['cpu_bfloat16_none', 'cuda_bfloat16_eager', 'cuda_bfloat16_sdpa']:
@@ -263,8 +292,24 @@ def make_bar_chart(configs, metric_key, ylabel, title, fname, footnote=None):
     values = [v for _, v in valid]
 
     fig, ax = plt.subplots(figsize=(12, 6))
-    colors = ['#d62728' if v > 10 else '#ff7f0e' if v > 5 else '#1f77b4' for v in values]
+    colors = [get_color_for_label(c['label']) for c in configs]
+    alphas = []
+    for c in configs:
+        lbl = c['label']
+        if 'BF16' in lbl or 'f16' in lbl:
+            alphas.append(1.0)
+        elif 'Q8_0' in lbl:
+            alphas.append(0.7)
+        elif 'Q4_K_M' in lbl:
+            alphas.append(0.4)
+        else:
+            alphas.append(0.85)
     bars = ax.barh(range(len(labels)), values, color=colors, edgecolor='black', linewidth=0.4)
+    for bar, alpha in zip(bars, alphas):
+        bar.set_alpha(alpha)
+    hatches = [get_hatch_for_label(c['label']) for c in configs]
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
     ax.set_yticks(range(len(labels)))
     ax.set_yticklabels(labels, fontsize=7)
     ax.set_xlabel(ylabel, fontsize=10)
@@ -276,11 +321,54 @@ def make_bar_chart(configs, metric_key, ylabel, title, fname, footnote=None):
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.1f}x', ha='left', va='center', fontsize=6)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
-    if footnote:
-        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=7,
-                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
     fig.tight_layout()
-    fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
+
+    pos = ax.get_position()
+    ax_r = pos.x0 + pos.width
+    ax_t = pos.y0 + pos.height
+    ax_b = pos.y0
+
+    color_legend = [
+        Patch(facecolor='#d62728', label='PyTorch-CPU'),
+        Patch(facecolor='#ff7f0e', label='PyTorch-iGPU-Eager'),
+        Patch(facecolor='#bcbd22', label='PyTorch-iGPU-SDPA'),
+        Patch(facecolor='#2ca02c', label='llama.cpp-CPU'),
+        Patch(facecolor='#17becf', label='llama.cpp-Vulkan'),
+        Patch(facecolor='#1f77b4', label='llama.cpp-ROCm'),
+    ]
+    hatch_legend = [
+        Patch(facecolor='white', edgecolor='gray', hatch='xx', label='Windows'),
+        Patch(facecolor='white', edgecolor='gray', hatch='//', label='WSL'),
+        Patch(facecolor='white', edgecolor='gray', hatch='', label='Linux'),
+    ]
+    alpha_legend = [
+        Patch(facecolor='black', alpha=1.0, label='F16 (α=1.0)'),
+        Patch(facecolor='black', alpha=0.7, label='Q8_0 (α=0.7)'),
+        Patch(facecolor='black', alpha=0.4, label='Q4_K_M (α=0.4)'),
+    ]
+    leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + hatch_legend + [Patch(facecolor='none', edgecolor='none', label='')] + alpha_legend
+    ax.legend(
+        handles=leg,
+        loc="upper left",
+        bbox_to_anchor=(ax_r + 0.02, ax_t),
+        frameon=True,
+        fontsize=6,
+    )
+
+    if footnote:
+        fig.text(
+            x=ax_r + 0.01,
+            y=ax_b,
+            s=footnote,
+            ha="left",
+            va="bottom",
+            fontsize=8,
+            bbox=dict(facecolor='#f5f5f5', edgecolor='#cccccc', boxstyle='round,pad=0.3'),
+        )
+
+    out_path = output_dir / fname
+    print(f'  Saving to: {out_path.absolute()}')
+    fig.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f'  Generated: {fname}')
 
@@ -298,19 +386,31 @@ def make_vggt_bar_chart(configs, envs, metric_extractor, ylabel, title, fname, b
                 entries.append({
                     'label': label,
                     'mult': val / best_val,
-                    'color': VGGT_ENV_COLORS[env],
+                    'color': get_color_for_label(display_cfg),
+                    'hatch': VGGT_ENV_HATCH.get(env, ''),
                 })
 
     if not entries:
         print(f'  No data for {fname}, skipping.')
+        print(f'  Debug: lookup size={len(vggt_lookup)}, configs={VGGT_ALL_CFGS}, envs={VGGT_ENVS}')
+        for cfg in VGGT_ALL_CFGS:
+            for env in VGGT_ENVS:
+                e = vggt_lookup.get((cfg, env))
+                print(f'    {cfg} / {env}: {e is not None}')
         return
 
     entries.sort(key=lambda x: x['mult'])
 
     fig, ax = plt.subplots(figsize=(14, 7))
+    colors = [e['color'] for e in entries]
+    hatches = [e.get('hatch', '') for e in entries]
+    lws = [1.5 if 'F32' in e['label'] else 0.5 for e in entries]
     bars = ax.barh(range(len(entries)), [e['mult'] for e in entries],
-                   color=[e['color'] for e in entries],
-                   edgecolor='black', linewidth=0.4)
+                   color=colors, edgecolor='black', linewidth=0.4)
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
+    for bar, lw in zip(bars, lws):
+        bar.set_linewidth(lw)
     ax.set_yticks(range(len(entries)))
     ax.set_yticklabels([e['label'] for e in entries], fontsize=6)
     ax.set_xlabel(ylabel, fontsize=10)
@@ -322,10 +422,47 @@ def make_vggt_bar_chart(configs, envs, metric_extractor, ylabel, title, fname, b
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.2f}x', ha='left', va='center', fontsize=5)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
-    if footnote:
-        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=7,
-                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
     fig.tight_layout()
+
+    pos = ax.get_position()
+    ax_r = pos.x0 + pos.width
+    ax_t = pos.y0 + pos.height
+    ax_b = pos.y0
+
+    color_legend = [
+        Patch(facecolor=get_color_for_label('CPU-F32'), label='CPU'),
+        Patch(facecolor=get_color_for_label('iGPU-F32-Eager'), label='iGPU-Eager'),
+        Patch(facecolor=get_color_for_label('iGPU-F32-SDPA'), label='iGPU-SDPA'),
+    ]
+    hatch_legend = [
+        Patch(facecolor='white', edgecolor='gray', hatch='xx', label='Windows'),
+        Patch(facecolor='white', edgecolor='gray', hatch='//', label='WSL'),
+        Patch(facecolor='white', edgecolor='gray', hatch='', label='Linux'),
+    ]
+    lw_legend = [
+        Patch(facecolor='white', edgecolor='black', linewidth=2, label='F32'),
+        Patch(facecolor='white', edgecolor='black', linewidth=0.5, label='BF16'),
+    ]
+    leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + hatch_legend + [Patch(facecolor='none', edgecolor='none', label='')] + lw_legend
+    ax.legend(
+        handles=leg,
+        loc="upper left",
+        bbox_to_anchor=(ax_r + 0.02, ax_t),
+        frameon=True,
+        fontsize=6,
+    )
+
+    if footnote:
+        fig.text(
+            x=ax_r + 0.01,
+            y=ax_b,
+            s=footnote,
+            ha="left",
+            va="bottom",
+            fontsize=8,
+            bbox=dict(facecolor='#f5f5f5', edgecolor='#cccccc', boxstyle='round,pad=0.3'),
+        )
+
     fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f'  Generated: {fname}')
@@ -338,15 +475,21 @@ TTFT_DATA = [{'label': c['label'], 'ttft_mult': c['ttft'] / best_ttft}
 TTFT_DATA.sort(key=lambda x: x['ttft_mult'])
 make_bar_chart(TTFT_DATA, 'ttft_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: TTFT (BF16 best={best_ttft:.0f}ms)',
-               'smolvlm_instruct_ttft_ratio.png', footnote=FALLBACK_FOOTNOTE)
+               'smolvlm_instruct_ttft_ratio.png', footnote=make_footnote('TTFT (ms)'))
 
+TPOT_DATA = [{'label': c['label'], 'tpot_mult': c['tpot'] / best_tpot}
+             for c in SMOLVLM_ALL_CFGS if c['tpot']]
+TPOT_DATA.sort(key=lambda x: x['tpot_mult'])
 make_bar_chart(TPOT_DATA, 'tpot_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: TPOT (BF16 best={best_tpot:.1f}ms)',
-               'smolvlm_instruct_tpot_ratio.png', footnote=FALLBACK_FOOTNOTE)
+                'smolvlm_instruct_tpot_ratio.png', footnote=make_footnote('TPOT (ms)'))
 
+ENERGY_DATA = [{'label': c['label'], 'energy_mult': c['energy'] / best_energy}
+               for c in SMOLVLM_ALL_CFGS if c['energy']]
+ENERGY_DATA.sort(key=lambda x: x['energy_mult'])
 make_bar_chart(ENERGY_DATA, 'energy_mult', 'Multiplier (relative to best BF16)',
                f'SmolVLM-Instruct: Energy per Inference (BF16 best={best_energy:.0f}J)',
-               'smolvlm_instruct_energy_ratio.png', footnote=FALLBACK_FOOTNOTE)
+                'smolvlm_instruct_energy_ratio.png', footnote=make_footnote('Energy per Inference (J)'))
 
 # ── VGGT Charts (all configs) ──
 print('\nVGGT charts:')
@@ -354,12 +497,12 @@ print('\nVGGT charts:')
 make_vggt_bar_chart(VGGT_ALL_CFGS, VGGT_ENVS,
                     get_throughput, 'Multiplier (relative to best BF16)',
                     f'VGGT: Throughput (BF16 best={best_vggt_throughput:.4f} img/s)',
-                    'vggt_throughput_ratio.png', best_vggt_throughput, footnote=FALLBACK_FOOTNOTE)
+                    'vggt_throughput_ratio.png', best_vggt_throughput)
 
 make_vggt_bar_chart(VGGT_ALL_CFGS, VGGT_ENVS,
                     get_efficiency, 'Multiplier (relative to best BF16)',
                     f'VGGT: Efficiency (BF16 best={best_vggt_efficiency:.2f} million/W)',
-                    'vggt_efficiency_ratio.png', best_vggt_efficiency, footnote=FALLBACK_FOOTNOTE)
+                    'vggt_efficiency_ratio.png', best_vggt_efficiency)
 
 # ── SmolVLM Family: ALL configs across all models, ratio vs baseline ──
 print('\nSmolVLM family ALL configs ratio charts:')
@@ -427,6 +570,15 @@ for e in smolvlm_lcpp:
     })
 
 def make_family_ratio_chart(metric, ylabel, title, fname, footnote=None):
+    # Map short metric keys to display names used in METRIC_DIRECTION
+    metric_display_map = {
+        'ttft': 'TTFT (ms)',
+        'tpot': 'TPOT (ms)',
+        'energy': 'Energy per Inference (J)',
+    }
+    metric_key = metric_display_map.get(metric, metric)
+    if footnote is None:
+        footnote = make_footnote(metric_key)
     valid = [e for e in all_family_entries if e[metric] is not None]
     baseline_map = {'ttft': BASELINE_TTFT, 'tpot': BASELINE_TPUT, 'energy': BASELINE_ENERGY}
     baseline = baseline_map[metric]
@@ -435,9 +587,25 @@ def make_family_ratio_chart(metric, ylabel, title, fname, footnote=None):
     valid.sort(key=lambda x: x['mult'])
 
     fig, ax = plt.subplots(figsize=(14, 12))
-    colors = [DTYPE_COLORS.get(e['dtype'], '#ccc') for e in valid]
+    colors = [get_color_for_label(e['label']) for e in valid]
+    hatches = [get_hatch_for_label(e['label']) for e in valid]
+    alphas = []
+    for e in valid:
+        dtype = e.get('dtype', '')
+        if dtype in ('bf16', 'f16'):
+            alphas.append(1.0)
+        elif dtype == 'Q8_0':
+            alphas.append(0.7)
+        elif dtype == 'Q4_K_M':
+            alphas.append(0.4)
+        else:
+            alphas.append(0.85)
     bars = ax.barh(range(len(valid)), [e['mult'] for e in valid],
                    color=colors, edgecolor='black', linewidth=0.4)
+    for bar, alpha in zip(bars, alphas):
+        bar.set_alpha(alpha)
+    for bar, hatch in zip(bars, hatches):
+        bar.set_hatch(hatch)
     ax.set_yticks(range(len(valid)))
     ax.set_yticklabels([e['label'] for e in valid], fontsize=6)
     ax.set_xlabel(ylabel, fontsize=10)
@@ -449,29 +617,66 @@ def make_family_ratio_chart(metric, ylabel, title, fname, footnote=None):
         ax.text(w, bar.get_y() + bar.get_height()/2, f'{w:.2f}x', ha='left', va='center', fontsize=5)
 
     ax.axvline(x=1, color='green', linestyle='--', alpha=0.6, linewidth=1)
-    if any(e.get('is_fallback', False) for e in valid):
-        fig.text(0.99, 0.01, FALLBACK_FOOTNOTE, transform=fig.transFigure, fontsize=7,
-                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
-
-    from matplotlib.patches import Patch
-    legend_patches = [Patch(facecolor=DTYPE_COLORS[dt], label=dt) for dt in ['bf16', 'f16', 'Q8_0', 'Q4_K_M']]
-    fig.legend(handles=legend_patches, loc='upper left', bbox_to_anchor=(1.0, 1), fontsize=7, ncol=1)
 
     fig.tight_layout()
+
+    pos = ax.get_position()
+    ax_r = pos.x0 + pos.width
+    ax_t = pos.y0 + pos.height
+    ax_b = pos.y0
+
+    color_legend = [
+        Patch(facecolor='#d62728', label='PyTorch-CPU'),
+        Patch(facecolor='#ff7f0e', label='PyTorch-iGPU-Eager'),
+        Patch(facecolor='#bcbd22', label='PyTorch-iGPU-SDPA'),
+        Patch(facecolor='#2ca02c', label='llama.cpp-CPU'),
+        Patch(facecolor='#17becf', label='llama.cpp-Vulkan'),
+        Patch(facecolor='#1f77b4', label='llama.cpp-ROCm'),
+    ]
+    hatch_legend = [
+        Patch(facecolor='white', edgecolor='gray', hatch='xx', label='Windows'),
+        Patch(facecolor='white', edgecolor='gray', hatch='//', label='WSL'),
+        Patch(facecolor='white', edgecolor='gray', hatch='', label='Linux'),
+    ]
+    alpha_legend = [
+        Patch(facecolor='black', alpha=1.0, label='F16 (α=1.0)'),
+        Patch(facecolor='black', alpha=0.7, label='Q8_0 (α=0.7)'),
+        Patch(facecolor='black', alpha=0.4, label='Q4_K_M (α=0.4)'),
+    ]
+    leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + hatch_legend + [Patch(facecolor='none', edgecolor='none', label='')] + alpha_legend
+    ax.legend(
+        handles=leg,
+        loc="upper left",
+        bbox_to_anchor=(ax_r + 0.02, ax_t),
+        frameon=True,
+        fontsize=6,
+    )
+
+    if footnote:
+        fig.text(
+            x=ax_r + 0.01,
+            y=ax_b,
+            s=footnote,
+            ha="left",
+            va="bottom",
+            fontsize=8,
+            bbox=dict(facecolor='#f5f5f5', edgecolor='#cccccc', boxstyle='round,pad=0.3'),
+        )
+
     fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
     plt.close(fig)
     print(f'  Generated: {fname}')
 
 make_family_ratio_chart('ttft', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — TTFT',
-                        'smolvlm_family_dtype_ttft_ratio.png', footnote=FALLBACK_FOOTNOTE)
+                        'smolvlm_family_dtype_ttft_ratio.png', footnote=None)
 
 make_family_ratio_chart('tpot', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — TPOT',
-                        'smolvlm_family_dtype_tpot_ratio.png', footnote=FALLBACK_FOOTNOTE)
+                        'smolvlm_family_dtype_tpot_ratio.png', footnote=None)
 
 make_family_ratio_chart('energy', 'Multiplier (relative to SmolVLM-Instruct BF16)',
                         'SmolVLM Family: ALL configs — Energy',
-                        'smolvlm_family_dtype_energy_ratio.png', footnote=FALLBACK_FOOTNOTE)
+                        'smolvlm_family_dtype_energy_ratio.png', footnote=None)
 
 print(f'\nDone → {output_dir.absolute()}')

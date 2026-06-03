@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
+from matplotlib.patches import Patch
 
 output_dir = Path('benchmark_charts')
 output_dir.mkdir(exist_ok=True)
@@ -20,7 +21,12 @@ METRIC_DIRECTION = {
     'Efficiency (million images / W)': 'higher is better',
 }
 
-FALLBACK_FOOTNOTE = "* ROCm fell back to CPU execution on this device.\nDirection: lower is better →← | higher is better →→"
+def make_footnote(metric):
+    direction = METRIC_DIRECTION.get(metric)
+    base = "* fell back to CPU"
+    if direction:
+        return f"{base}\nDirection: {direction}"
+    return base
 
 # Rainbow colors: Red > Orange > Yellow > Green > Cyan > Blue > Purple
 # Same color = same execution target (across all charts)
@@ -52,7 +58,7 @@ VGGT_CFG_COLORS_BY_SEMANTICS = {
     'iGPU-F32-Eager': '#ff7f0e', # Orange (PyTorch iGPU eager / BF16)
     'iGPU-F32-SDPA': '#bcbd22',  # Yellow (PyTorch iGPU SDPA)
     'iGPU-BF16-Eager': '#ff7f0e', # Orange (PyTorch iGPU eager / BF16)
-    'iGPU-BF16-SDPA': '#1f77b4', # Blue (llama.cpp ROCm / VGGT iGPU-BF16-SDPA)
+    'iGPU-BF16-SDPA': '#bcbd22',  # Yellow (same as iGPU-F32-SDPA)
 }
 
 def load_json(path):
@@ -186,7 +192,8 @@ def avg_metric(entries, metric_key):
     return avg, err, is_fallback
 
 SMOLVLM_PT_CFGS = ['cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_bfloat16_none']
-VGGT_CFGS = ['cuda_float32_eager', 'cuda_float32_sdpa', 'cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_float32_none', 'cpu_bfloat16_none']
+VGGT_CFGS = ['cuda_float32_eager', 'cuda_float32_sdpa', 'cpu_float32_none',
+             'cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_bfloat16_none']
 LL_BACKENDS = ['cpu', 'vulkan', 'rocm']
 LL_QUANTS = ['f16', 'Q8_0', 'Q4_K_M']
 
@@ -196,12 +203,12 @@ ENV_HATCH = {'PyTorch': '', 'llama.cpp': '///'}
 def sanitize(s):
     return s.lower().replace(" ", "_").replace("(", "").replace(")", "").replace("/", "_per_")
 
-def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5, errors=None, footnote=None):
+def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10, fig_h=4.5, errors=None, footnote=None, group_start=None):
     max_bars = max(len(g) for g in groups) if groups else 1
     width = 0.85 / max_bars
     positions, vals = [], []
     for gi, group in enumerate(groups):
-        gpos = gi + 0.1
+        gpos = group_start[gi] if group_start and gi < len(group_start) else (gi + 0.1)
         for bi, bar in enumerate(group):
             positions.append(gpos + bi * width)
             vals.append(bar['value'] if bar['value'] is not None else 0)
@@ -209,7 +216,16 @@ def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10,
     flat_bars = sum(groups, [])
     colors = [bar.get('color', '#ccc') if bar['value'] is not None else '#ddd' for bar in flat_bars]
 
-    bars = ax.bar(positions, vals, width=width * 0.92, color=colors, alpha=0.85, edgecolor='black', linewidth=0.5)
+    bars = ax.bar(positions, vals, width=width * 0.92, color=colors)
+    for bar, bdict in zip(bars, flat_bars):
+        if 'hatch' in bdict:
+            bar.set_hatch(bdict['hatch'])
+        if 'F32' in bdict.get('label', ''):
+            bar.set_edgecolor('black')
+            bar.set_linewidth(1.5)
+        else:
+            bar.set_edgecolor('black')
+            bar.set_linewidth(0.5)
 
     if errors and any(e is not None for e in errors):
         for i, (bar, err) in enumerate(zip(bars, errors)):
@@ -238,7 +254,7 @@ def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10,
             else:            lbl = f'{int(h)}'
             ax.text(bar.get_x() + bar.get_width() / 2., h, lbl, ha='center', va='bottom', fontsize=3.5)
 
-    tick_pos = [i + 0.1 + (len(g) - 1) * width / 2 for i, g in enumerate(groups)]
+    tick_pos = [(group_start[gi] if group_start and gi < len(group_start) else (gi + 0.1)) + (len(g) - 1) * width / 2 for gi, g in enumerate(groups)]
     ax.set_xticks(tick_pos)
     ax.set_xticklabels(group_labels, fontsize=6.5, rotation=0, ha='center')
     ax.set_ylabel(ylabel, fontsize=10)
@@ -247,12 +263,32 @@ def plot_bars(ax, groups, group_labels, ylabel, title, legend_handles, fig_w=10,
     fig = ax.figure
     fig.set_figwidth(fig_w)
     fig.set_figheight(fig_h)
-    fig.tight_layout(rect=[0, 0, 1.0, 1])
+    fig.tight_layout()
+
+    pos = ax.get_position()
+    ax_r = pos.x0 + pos.width
+    ax_t = pos.y0 + pos.height
+    ax_b = pos.y0
+
     if legend_handles:
-        fig.legend(handles=legend_handles, loc='upper left', bbox_to_anchor=(1.0, 1), fontsize=6, ncol=1)
+        ax.legend(
+            handles=legend_handles,
+            loc="upper left",
+            bbox_to_anchor=(ax_r + 0.015, ax_t),
+            frameon=True,
+            fontsize=6,
+        )
+
     if footnote:
-        fig.text(0.99, 0.01, footnote, transform=fig.transFigure, fontsize=6,
-                 va='bottom', ha='right', bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
+        fig.text(
+            x=ax_r + 0.01,
+            y=ax_b,
+            s=footnote,
+            ha="left",
+            va="bottom",
+            fontsize=7,
+            bbox=dict(facecolor='#f5f5f5', edgecolor='#cccccc', boxstyle='round,pad=0.3'),
+        )
 
 # ── 1. SmoVLM-Instruct ──
 def plot_smolvlm_instruct():
@@ -281,9 +317,9 @@ def plot_smolvlm_instruct():
     # Part 3 style: distinct color per device-framework, hatch per environment
     cfg_color = CFG_COLORS_BY_SEMANTICS
     cfg_hatch = {
-        'Windows-PyTorch-CPU': '', 'WSL-PyTorch-CPU': '//', 'Linux-PyTorch-CPU': 'xx',
-        'Windows-PyTorch-iGPU-Eager': '', 'WSL-PyTorch-iGPU-Eager': '//', 'Linux-PyTorch-iGPU-Eager': 'xx',
-        'Windows-PyTorch-iGPU-SDPA': '', 'WSL-PyTorch-iGPU-SDPA': '//', 'Linux-PyTorch-iGPU-SDPA': 'xx',
+        'Windows-PyTorch-CPU': 'xx', 'WSL-PyTorch-CPU': '//', 'Linux-PyTorch-CPU': '',
+        'Windows-PyTorch-iGPU-Eager': 'xx', 'WSL-PyTorch-iGPU-Eager': '//', 'Linux-PyTorch-iGPU-Eager': '',
+        'Windows-PyTorch-iGPU-SDPA': 'xx', 'WSL-PyTorch-iGPU-SDPA': '//', 'Linux-PyTorch-iGPU-SDPA': '',
         'Linux-llama.cpp-CPU': '', 'Linux-llama.cpp-iGPU-Vulkan': '', 'Linux-llama.cpp-iGPU-ROCm': '',
     }
 
@@ -321,6 +357,7 @@ def plot_smolvlm_instruct():
             for cfg_name in configs_in_group:
                 v = None
                 err = None
+                fallback = False
                 if 'PyTorch' in cfg_name:
                     parts = cfg_name.split('-')
                     env = parts[0]
@@ -347,22 +384,30 @@ def plot_smolvlm_instruct():
                 })
             groups.append(bg)
 
-        from matplotlib.patches import Patch
         all_cfgs = list(dict.fromkeys(sum(dtype_groups.values(), [])))
-        leg = []
-        for c in all_cfgs:
-            lbl = c
-            if 'llama.cpp' in c and 'ROCm' in c and 'CPU' not in c:
-                bk = 'rocm'
-                if 'f16' in c: quant = 'f16'
-                elif 'Q8_0' in c: quant = 'Q8_0'
-                elif 'Q4_K_M' in c: quant = 'Q4_K_M'
-                else: quant = None
-                if quant:
-                    entries = llamacpp_records.get((model, bk, quant))
-                    if entries and any(get_effective_device(e) == 'cpu' for e in entries):
-                        lbl = c + ' *'
-            leg.append(Patch(facecolor=cfg_color[c], hatch=cfg_hatch.get(c, ''), label=lbl))
+
+        rocm_fallback = False
+        for bk, quant_list in [('rocm', ['f16', 'Q8_0', 'Q4_K_M'])]:
+            for q in quant_list:
+                entries = llamacpp_records.get((model, bk, q))
+                if entries and any(get_effective_device(e) == 'cpu' for e in entries):
+                    rocm_fallback = True
+                    break
+
+        color_legend = [
+            Patch(facecolor='#d62728', label='PyTorch-CPU'),
+            Patch(facecolor='#ff7f0e', label='PyTorch iGPU-Eager'),
+            Patch(facecolor='#bcbd22', label='PyTorch iGPU-SDPA'),
+            Patch(facecolor='#2ca02c', label='llama.cpp-CPU'),
+            Patch(facecolor='#17becf', label='llama.cpp-Vulkan'),
+            Patch(facecolor='#1f77b4', label='llama.cpp-ROCm' + (' *' if rocm_fallback else '')),
+        ]
+        hatch_legend = [
+            Patch(facecolor='white', edgecolor='gray', hatch='xx', label='Windows'),
+            Patch(facecolor='white', edgecolor='gray', hatch='//', label='WSL'),
+            Patch(facecolor='white', edgecolor='gray', hatch='', label='Linux'),
+        ]
+        leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + hatch_legend
 
         err_vals = []
         for g in groups:
@@ -372,7 +417,8 @@ def plot_smolvlm_instruct():
                 else:
                     err_vals.append(None)
 
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
+        group_starts = [0.1, 1.1, 1.6, 2.1]
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM-Instruct: {metric}', leg, fig_w=12, fig_h=4, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=make_footnote(metric), group_start=group_starts)
         fname = f'smolvlm_instruct_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
@@ -400,48 +446,61 @@ def plot_vggt():
 
     # Rainbow colors: Red > Orange > Yellow > Green > Cyan > Blue > Purple
     cfg_color_map = VGGT_CFG_COLORS_BY_SEMANTICS
-    env_hatch_map = {'Windows': '', 'WSL': '//', 'Linux': 'xx'}
+    env_hatch_map = {'Windows': 'xx', 'WSL': '//', 'Linux': ''}
 
     for metric, unit in metrics:
         fig, ax = plt.subplots()
         groups, labels = [], []
-        for cfg in VGGT_CFGS:
-            labels.append(cfg_disp.get(cfg, cfg))
+        for precision_name, cfgs in [('F32', ['cuda_float32_eager', 'cuda_float32_sdpa', 'cpu_float32_none']),
+                                      ('BF16', ['cuda_bfloat16_eager', 'cuda_bfloat16_sdpa', 'cpu_bfloat16_none'])]:
+            labels.append(precision_name)
             bg = []
-            for env in envs:
-                e = idx.get((cfg, env))
-                v = None
-                err = None
-                if e:
-                    if 'Efficiency' in metric:
-                        m = extract_metrics(e)
-                        raw = m.get('Efficiency (img/W)')
-                        v = raw * 1000 if raw else None
-                    else:
-                        m, er = extract_metrics_with_error(e)
-                        v = m.get(metric)
-                        err = er.get(metric)
-                bg.append({
-                    'value': v,
-                    'error': err,
-                    'color': cfg_color_map.get(cfg_disp.get(cfg, cfg), '#ccc'),
-                    'hatch': env_hatch_map.get(env, ''),
-                    'label': f'{env}-{cfg_disp.get(cfg, cfg)}',
-                })
+            for cfg in cfgs:
+                for env in envs:
+                    e = idx.get((cfg, env))
+                    v = None
+                    err = None
+                    if e:
+                        if 'Efficiency' in metric:
+                            m = extract_metrics(e)
+                            raw = m.get('Efficiency (img/W)')
+                            v = raw * 1000 if raw else None
+                        else:
+                            m, er = extract_metrics_with_error(e)
+                            v = m.get(metric)
+                            err = er.get(metric)
+                    bg.append({
+                        'value': v,
+                        'error': err,
+                        'color': cfg_color_map.get(cfg_disp.get(cfg, cfg), '#ccc'),
+                        'hatch': env_hatch_map.get(env, ''),
+                        'label': f'{env}-{cfg_disp.get(cfg, cfg)}',
+                    })
             groups.append(bg)
 
-        from matplotlib.patches import Patch
         seen = {}
         for cfg in VGGT_CFGS:
             for env in envs:
                 label = f'{env}-{cfg_disp.get(cfg, cfg)}'
                 if label not in seen:
                     seen[label] = True
-        leg = [Patch(facecolor=cfg_color_map.get(cfg_disp.get(cfg, cfg), '#ccc'),
-                     hatch=env_hatch_map.get(env, ''),
-                     label=f'{env}-{cfg_disp.get(cfg, cfg)}')
-               for cfg in VGGT_CFGS for env in envs
-               if f'{env}-{cfg_disp.get(cfg, cfg)}' in seen]
+
+        color_legend = [
+            Patch(facecolor=cfg_color_map.get('CPU-F32', '#ccc'), hatch='', label='CPU'),
+            Patch(facecolor=cfg_color_map.get('iGPU-F32-Eager', '#ccc'), hatch='', label='iGPU-Eager'),
+            Patch(facecolor=cfg_color_map.get('iGPU-F32-SDPA', '#ccc'), hatch='', label='iGPU-SDPA'),
+        ]
+
+        hatch_legend = [
+            Patch(facecolor='white', edgecolor='gray', hatch='xx', label='Windows'),
+            Patch(facecolor='white', edgecolor='gray', hatch='//', label='WSL'),
+            Patch(facecolor='white', edgecolor='gray', hatch='', label='Linux'),
+        ]
+        alpha_legend = [
+            Patch(facecolor='white', edgecolor='black', linewidth=2, label='F32'),
+            Patch(facecolor='white', edgecolor='black', linewidth=0.5, label='BF16'),
+        ]
+        leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + hatch_legend + [Patch(facecolor='none', edgecolor='none', label='')] + alpha_legend
 
         err_vals = []
         for g in groups:
@@ -451,7 +510,7 @@ def plot_vggt():
                 else:
                     err_vals.append(None)
 
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'VGGT: {metric}', leg, fig_w=14, fig_h=4.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=make_footnote(metric))
         fname_base = metric.replace(' (million images / W)', '').replace(' (', '_').replace(')', '').replace('/', '_').lower()
         fname = f'vggt_{sanitize(fname_base)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
@@ -477,9 +536,9 @@ def plot_family():
     # Backend+Dtype combos to show per model
     backend_dtypes = [
         ('PyTorch-iGPU-sdpa', 'bf16'),
-        ('llama.cpp-cpu', 'f16'), ('llama.cpp-cpu', 'Q8_0'), ('llama.cpp-cpu', 'Q4_K_M'),
-        ('llama.cpp-vulkan', 'f16'), ('llama.cpp-vulkan', 'Q8_0'), ('llama.cpp-vulkan', 'Q4_K_M'),
-        ('llama.cpp-rocm', 'f16'), ('llama.cpp-rocm', 'Q8_0'), ('llama.cpp-rocm', 'Q4_K_M'),
+        ('llama.cpp-cpu', 'f16'), ('llama.cpp-vulkan', 'f16'), ('llama.cpp-rocm', 'f16'),
+        ('llama.cpp-cpu', 'Q8_0'), ('llama.cpp-vulkan', 'Q8_0'), ('llama.cpp-rocm', 'Q8_0'),
+        ('llama.cpp-cpu', 'Q4_K_M'), ('llama.cpp-vulkan', 'Q4_K_M'), ('llama.cpp-rocm', 'Q4_K_M'),
     ]
 
     # Color per backend+dtype using a map
@@ -491,9 +550,15 @@ def plot_family():
     }
     bar_hatches = {
         'PyTorch-iGPU-sdpa': '',
-        'llama.cpp-cpu-f16': '', 'llama.cpp-cpu-Q8_0': '//', 'llama.cpp-cpu-Q4_K_M': 'xx',
-        'llama.cpp-vulkan-f16': '', 'llama.cpp-vulkan-Q8_0': '//', 'llama.cpp-vulkan-Q4_K_M': 'xx',
-        'llama.cpp-rocm-f16': '', 'llama.cpp-rocm-Q8_0': '//', 'llama.cpp-rocm-Q4_K_M': 'xx',
+        'llama.cpp-cpu-f16': '', 'llama.cpp-cpu-Q8_0': '', 'llama.cpp-cpu-Q4_K_M': '',
+        'llama.cpp-vulkan-f16': '', 'llama.cpp-vulkan-Q8_0': '', 'llama.cpp-vulkan-Q4_K_M': '',
+        'llama.cpp-rocm-f16': '', 'llama.cpp-rocm-Q8_0': '', 'llama.cpp-rocm-Q4_K_M': '',
+    }
+    bar_alphas = {
+        'llama.cpp-cpu-f16': 1.0, 'llama.cpp-cpu-Q8_0': 0.7, 'llama.cpp-cpu-Q4_K_M': 0.4,
+        'llama.cpp-vulkan-f16': 1.0, 'llama.cpp-vulkan-Q8_0': 0.7, 'llama.cpp-vulkan-Q4_K_M': 0.4,
+        'llama.cpp-rocm-f16': 1.0, 'llama.cpp-rocm-Q8_0': 0.7, 'llama.cpp-rocm-Q4_K_M': 0.4,
+        'PyTorch-iGPU-sdpa': 1.0,
     }
 
     model_labels = {
@@ -517,6 +582,7 @@ def plot_family():
             for bk, d in backend_dtypes:
                 v = None
                 err = None
+                fallback = False
                 if bk == 'PyTorch-iGPU-sdpa':
                     entry = pt_data.get((model, 'cuda_bfloat16_sdpa', 'Linux'))
                     if entry:
@@ -528,16 +594,17 @@ def plot_family():
                     entries = llamacpp_records.get((model, bk_short, d))
                     v, err, fallback = avg_metric(entries, metric) if entries else (None, None, False)
                 key = f'{bk}-{d}'
+                color_key = key if key in bar_colors else (bk if bk in bar_colors else key)
                 bg.append({
                     'value': v,
                     'error': err,
-                    'color': bar_colors.get(key, '#ccc'),
-                    'hatch': bar_hatches.get(key, ''),
+                    'color': bar_colors.get(color_key, bar_colors.get(bk, '#ccc')),
+                    'hatch': bar_hatches.get(key, bar_hatches.get(bk, '')),
+                    'alpha': bar_alphas.get(key, bar_alphas.get(bk, 0.85)),
                     'label': key + (' *' if fallback else ''),
                 })
             groups.append(bg)
 
-        from matplotlib.patches import Patch
         err_vals = []
         for g in groups:
             for b in g:
@@ -546,20 +613,28 @@ def plot_family():
                 else:
                     err_vals.append(None)
 
-        leg = []
-        seen = set()
+        backend_fallback = {}
         for bk, d in backend_dtypes:
-            key = f'{bk}-{d}'
-            lbl = f'{bk} ({d})'
-            if lbl not in seen:
-                seen.add(lbl)
-                if bk != 'PyTorch-iGPU-sdpa':
-                    bk_short = bk.split('-')[1]
-                    entries = llamacpp_records.get(('SmolVLM-Instruct', bk_short, d))
-                    if entries and any(get_effective_device(e) == 'cpu' for e in entries):
-                        lbl = lbl + ' *'
-                leg.append(Patch(facecolor=bar_colors.get(key, '#ccc'), hatch=bar_hatches.get(key, ''), label=lbl))
-        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=FALLBACK_FOOTNOTE)
+            if bk == 'PyTorch-iGPU-sdpa':
+                continue
+            bk_short = bk.split('-')[1]
+            entries = llamacpp_records.get(('SmolVLM-Instruct', bk_short, d))
+            if entries and any(get_effective_device(e) == 'cpu' for e in entries):
+                backend_fallback[bk] = True
+
+        color_legend = [
+            Patch(facecolor='#bcbd22', label='PyTorch iGPU-SDPA'),
+            Patch(facecolor='#2ca02c', label='llama.cpp-CPU' + (' *' if backend_fallback.get('llama.cpp-cpu') else '')),
+            Patch(facecolor='#17becf', label='llama.cpp-Vulkan' + (' *' if backend_fallback.get('llama.cpp-vulkan') else '')),
+            Patch(facecolor='#1f77b4', label='llama.cpp-ROCm' + (' *' if backend_fallback.get('llama.cpp-rocm') else '')),
+        ]
+        alpha_legend = [
+            Patch(facecolor='black', alpha=1.0, label='F16 (α=1.0)'),
+            Patch(facecolor='black', alpha=0.7, label='Q8_0 (α=0.7)'),
+            Patch(facecolor='black', alpha=0.4, label='Q4_K_M (α=0.4)'),
+        ]
+        leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + alpha_legend + [Patch(facecolor='none', edgecolor='none', label='')] + [Patch(facecolor='white', edgecolor='gray', label='* = ROCm CPU fallback')]
+        plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM Family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=make_footnote(metric))
         fname = f'smolvlm_llamacpp_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
