@@ -370,6 +370,8 @@ def plot_smolvlm_instruct():
                             m, e = extract_metrics_with_error(entry)
                             v = m.get(metric)
                             err = e.get(metric)
+                            if metric == 'Peak Memory (GB)' and pt_cfg == 'cpu_bfloat16_none':
+                                v = entry.get('memory', {}).get('cpu_rss_mb', 0) / 1024
                 else:
                     bk = 'cpu' if '-CPU' in cfg_name else ('vulkan' if 'Vulkan' in cfg_name else 'rocm')
                     quant = dtype_name
@@ -469,6 +471,9 @@ def plot_vggt():
                             m, er = extract_metrics_with_error(e)
                             v = m.get(metric)
                             err = er.get(metric)
+                            if 'Peak Memory' in metric and cfg.startswith('cpu_'):
+                                mem = e.get('memory', {})
+                                v = mem.get('cpu_rss_mb', 0) / 1024
                     bg.append({
                         'value': v,
                         'error': err,
