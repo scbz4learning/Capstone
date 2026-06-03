@@ -2,6 +2,8 @@
 
 ## Decision Flowchart
 
+![Quick Selection Chart](../assets/Soft_Stack_Quick_Selection.png)
+
 ```
 Does your device have an NPU?
 ├── Yes → What is your NPU device?
