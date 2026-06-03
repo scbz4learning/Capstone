@@ -4,6 +4,35 @@ SmolVLM is a compact vision-language model (2B params) developed by Hugging Face
 
 ---
 
+## Quick Start
+
+```bash
+source venv/bin/activate
+
+# Describe an image
+python scripts/smolvlm/run_smolvlm.py \
+    --images path/to/image.jpg \
+    --prompt "Describe the scene briefly." \
+    --device cuda --dtype bfloat16 \
+    --output-dir smolvlm_output
+
+# Run on CPU
+python scripts/smolvlm/run_smolvlm.py \
+    --images path/to/image.jpg \
+    --prompt "What hazards do you see?" \
+    --device cpu --dtype float32 \
+    --output-dir smolvlm_output_cpu
+
+# Stream output token-by-token
+python scripts/smolvlm/run_smolvlm.py \
+    --images path/to/image.jpg \
+    --prompt "Describe this driving scene." \
+    --device cuda --dtype bfloat16 \
+    --stream
+
+# Outputs: console output + result.json
+```
+
 ## Framework Recommendation
 
 | Framework | Recommendation | Reason |

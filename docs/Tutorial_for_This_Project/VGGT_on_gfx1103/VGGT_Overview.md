@@ -11,6 +11,27 @@ VGGT (Visual Geometry Group Transformer) is a feed-forward model developed by Fa
     !!! note "Note"
         On our hardware, this change was not very noticeable — the WSL deployment advantage far outweighs the frames-per-memory gains.
 
+## Quick Start
+
+```bash
+# Prerequisites: git submodule, venv, and vggt installed (see PyTorch.md)
+source venv/bin/activate
+
+# Run inference on two images
+python scripts/vggt/run_vggt.py \
+    --images path/to/image1.png path/to/image2.png \
+    --device cuda --dtype bfloat16 \
+    --output-dir vggt_output --save-vis
+
+# Run on CPU
+python scripts/vggt/run_vggt.py \
+    --images path/to/image1.png path/to/image2.png \
+    --device cpu --dtype float32 \
+    --output-dir vggt_output_cpu
+
+# Outputs: pred_cam.pt, pred_points.pt, pred_conf.pt, depth_*.png, summary.json
+```
+
 ## Framework Recommendation
 
 | Framework | Recommendation | Reason |
