@@ -34,7 +34,7 @@ Deploying modern AI perception models on edge hardware is not just about the har
 
 ### For Vision-Language Models (SmolVLM)
 
-The clear recommendation is **llama.cpp with FP16 quantisation and the Vulkan backend**. This achieves ~116 ms time-to-first-token — roughly **60× faster** than running through PyTorch on the same GPU — while using only 0.20 GB of memory and introducing no accuracy loss. A faster but lower-accuracy option (Q4_K_M, ~95 ms) exists for latency-critical tasks. The older SmolVLM model is replaced by **SmolVLM2-2.2B-Instruct**, which needs no workaround to run and achieves the same speed, making it the preferred choice for production use.
+The clear recommendation is **llama.cpp with Q8_0 quantisation and the Vulkan backend**. This achieves ~93 ms time-to-first-token — roughly **75× faster** than running through PyTorch on the same GPU — while drawing only ~33 W of package power (roughly half of CPU inference). Q8_0 uses 3.9 GB of memory with no accuracy loss from the FP16 baseline. A lower-memory option (Q4_K_M, ~96 ms, 3.2 GB) exists for memory-constrained scenarios, and FP16 (~117 ms, 5.4 GB) for maximum accuracy. The older SmolVLM model is replaced by **SmolVLM2-2.2B-Instruct**, which needs no workaround to run and achieves the same speed, making it the preferred choice for production use.
 
 ### For 3D Vision Models (VGGT)
 
@@ -43,7 +43,7 @@ Results are heavily platform-dependent. On **WSL2**, the Windows GPU driver deli
 ### Important Caveats
 
 - **NPU (XDNA 1)** on this device cannot run transformer-based models — a documented hardware limitation.
-- The **ROCm backend** in llama.cpp draws roughly twice the power of CPU inference while delivering no speed advantage and should be avoided.
+- The **ROCm backend** in llama.cpp offers no GPU offloading benefit — it draws the same power as CPU inference (~48-52W) while being up to 2.2× slower for FP16. Moreover, attempting to use ROCm can make the system **unstable**, sometimes causing power to spike to ~105W (2× normal), and should be avoided.
 - Many quantisation and compilation tools (AMD Quark, IREE, ONNX Runtime with MIGraphX) were evaluated but could not be deployed on this hardware configuration.
 
 ## Updates After Report

@@ -9,9 +9,9 @@ llama.cpp runs SmolVLM / SmolVLM2 with Vulkan offload on AMD Radeon 780M. No com
 ### 1. Download prebuilt binary (Ubuntu, Vulkan)
 
 ```bash
-wget https://github.com/ggml-org/llama.cpp/releases/download/b9468/llama-b9468-bin-ubuntu-vulkan-x64.tar.gz
-tar -xzf llama-b9468-bin-ubuntu-vulkan-x64.tar.gz
-cd llama-b9468-bin-ubuntu-vulkan-x64
+wget https://github.com/ggml-org/llama.cpp/releases/download/b9357/llama-b9357-bin-ubuntu-vulkan-x64.tar.gz
+tar -xzf llama-b9357-bin-ubuntu-vulkan-x64.tar.gz
+cd llama-b9357-bin-ubuntu-vulkan-x64
 ```
 
 `llama-cli` is the inference binary. All required libraries are bundled; no `apt` installs needed.
@@ -75,14 +75,14 @@ Images are passed in order with the prompt:
 On AMD Ryzen 7 8845HS + Radeon 780M:
 
 | Model | Quant | TTFT | TPOT | Peak VRAM |
-|---|---|---|---|---|
-| SmolVLM2-2.2B-Instruct | f16 | ~116ms | ~47ms | ~0.22 GB |
-| SmolVLM-Instruct | f16 | ~116ms | ~47ms | ~0.20 GB |
+|---|---|---|---|---|---|
+| SmolVLM2-2.2B-Instruct | f16 | ~117ms | ~47ms | ~5.4 GB |
+| SmolVLM-Instruct | f16 | ~116ms | ~47ms | ~6.9 GB |
 
-Vulkan offloading drops host memory from several GB (CPU-only) to ~0.2 GB.
+GPU VRAM usage reflects the full model size (3.2–6.9 GB depending on quantisation and model).
 
 !!! warning "SmolVLM-Instruct tokenizer patch"
     The original `SmolVLM-Instruct` tokenizer is missing the `<global-img>` marker token and requires a small patch in `mtmd.cpp` (filter out `LLAMA_TOKEN_NULL`). **Use SmolVLM2-2.2B-Instruct instead** — it works out of the box with official llama.cpp builds.
 
 !!! warning "ROCm backend"
-    Do **not** use the ROCm backend (`-ngl` is Vulkan-only in this setup). ROCm on this APU performs on par with CPU while drawing far more power (~105 W vs ~48 W).
+    Do **not** use the ROCm backend. On this APU, ROCm silently falls back to CPU execution — performance and power equal CPU (~48-52W), and it can be up to 2.2× slower than CPU for FP16 due to ROCm overhead. Worse, the system can become **unstable** — power occasionally spikes to ~105W (over 2× normal) when ROCm is active, likely due to driver issues with the integrated GPU on gfx1103.
