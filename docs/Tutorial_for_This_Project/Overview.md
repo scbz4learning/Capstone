@@ -39,17 +39,17 @@ Three environments were benchmarked: **Windows** (native ROCm), **WSL 2** (GPU p
 
 ## Model Comparison & Recommendations
 
-| Model | Size | Best Config | TTFT / Latency | Peak Memory | Framework |
-|---|---|---|---|---|---|
-| **SmolVLM2-2.2B-Instruct** | 2.2B | llama.cpp Vulkan f16 | ~116ms TTFT, ~47ms TPOT | ~0.2 GB | llama.cpp (recommended) / PyTorch (full precision only) |
-| **SmolVLM-Instruct** | 2.2B | llama.cpp Vulkan f16 | ~116ms TTFT, ~47ms TPOT | ~0.2 GB | llama.cpp (patched) / PyTorch BF16 SDPA |
-| **SmolVLM-500M-Instruct** | 500M | llama.cpp Vulkan f16 | ~42ms TTFT, ~11ms TPOT | ~0.14 GB | llama.cpp / PyTorch BF16 |
-| **SmolVLM-256M-Instruct** | 256M | llama.cpp Vulkan f16 | ~21ms TTFT, ~5ms TPOT | ~0.13 GB | llama.cpp / PyTorch BF16 |
-| **VGGT-1B** | 1B | WSL PyTorch iGPU BF16-SDPA | ~1.56s/image (WSL) / ~30.3s/image (Linux) | ~2.84 GB (WSL) / ~2.71 GB (Linux) | PyTorch only (WSL: fast; Linux: slow CPU-bound fallback) |
+| Model | Size | Best Config | TTFT / Latency | Framework |
+|---|---|---|---|---|
+| **SmolVLM2-2.2B-Instruct** | 2.2B | llama.cpp Vulkan Q8_0 | ~93ms TTFT, ~24ms TPOT | llama.cpp (recommended) / PyTorch (full precision only) |
+| **SmolVLM-Instruct** | 2.2B | llama.cpp Vulkan Q8_0 | ~94ms TTFT, ~24ms TPOT | llama.cpp (patched) / PyTorch BF16 SDPA |
+| **SmolVLM-500M-Instruct** | 500M | llama.cpp Vulkan Q8_0 | ~41ms TTFT, ~7ms TPOT | llama.cpp / PyTorch BF16 |
+| **SmolVLM-256M-Instruct** | 256M | llama.cpp Vulkan Q8_0 | ~21ms TTFT, ~4ms TPOT | llama.cpp / PyTorch BF16 |
+| **VGGT-1B** | 1B | WSL PyTorch iGPU BF16-SDPA | ~1.56s/image (WSL) / ~30.3s/image (Linux) | PyTorch only (WSL: fast; Linux: slow CPU-bound fallback) |
 
 ### Key Decisions
 
-1. **SmolVLM — use llama.cpp on Vulkan**: f16 quantization achieves real-time inference (~116ms TTFT) with minimal memory footprint. Q8_0 is nearly as fast with slightly lower memory. PyTorch BF16 is only viable when full precision is required.
+1. **SmolVLM — use llama.cpp on Vulkan**: Q8_0 quantization achieves real-time inference (~93ms TTFT) with ~33W package power — roughly half of CPU inference. PyTorch BF16 is only viable when full precision is required.
 2. **SmolVLM-Instruct — prefer SmolVLM2-2.2B-Instruct**: the original model requires a tokenizer patch in llama.cpp; SmolVLM2 has proper support upstream.
 3. **VGGT — PyTorch on WSL**: VGGT is fundamentally CPU-bound. WSL (sharing Windows GPU driver) delivers ~20× better throughput than native Linux (~1.56s vs ~30.3s per image with BF16-SDPA). Linux native PyTorch with BF16 is the only self-hosted option but is slow (~30s/image).
-4. **Avoid ROCm backend in llama.cpp**: ROCm performs on par with CPU but draws significantly more power (~105W vs ~48W) with no speed advantage.
+4. **Avoid ROCm backend in llama.cpp**: ROCm silently falls back to CPU execution — same power as CPU (~48-52W), no speed advantage, and the system can become unstable with power occasionally spiking to ~105W (2× normal).
