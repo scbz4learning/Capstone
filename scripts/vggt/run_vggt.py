@@ -65,7 +65,9 @@ def main():
     elapsed = time.perf_counter() - t0
     print(f"Inference done in {elapsed:.3f}s ({elapsed / len(images):.3f}s per image)")
 
-    pred_cam, pred_points, pred_conf = out
+    pred_cam = out["pose_enc"]
+    pred_points = out["world_points"]
+    pred_conf = out["world_points_conf"]
 
     print(f"\nOutput shapes:")
     print(f"  pred_cam (camera params):   {list(pred_cam.shape)}")
