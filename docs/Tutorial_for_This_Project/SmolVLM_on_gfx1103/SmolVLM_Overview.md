@@ -8,18 +8,18 @@ SmolVLM is a compact vision-language model (2B params) developed by Hugging Face
 
 | Framework | Recommendation | Reason |
 |-----------|---------------|--------|
-| **llama.cpp** (Vulkan) | ✅ Primary | Best TTFT (~116ms) + lowest memory (~0.2GB) for SmolVLM2-2.2B-Instruct with Q4_K_M. f16 is preferred for accuracy. Vulkan offloading critical. |
-| **llama.cpp** (ROCm) | ⚠️ Not recommended | Same speed as CPU, draws ~2× more power (~105W). No advantage over Vulkan. |
-| **PyTorch** (BF16, SDPA) | ⚠️ Fallback only | Only choice for full-precision or gradient-based use. ~6930ms TTFT — ~60× slower than llama.cpp. |
+| **llama.cpp** (Vulkan) | ✅ Primary | Fastest TTFT (~95ms) + lowest power (~26-33W) for SmolVLM2-2.2B-Instruct with Q8_0 or Q4_K_M. Memory 3.2-5.4GB depending on quantization. Vulkan offloading critical. |
+| **llama.cpp** (ROCm) | ⚠️ Not recommended | Same power as CPU (~48-52W), but 2.2× slower for f16 and no better for quantized. Effectively CPU execution with ROCm overhead. |
+| **PyTorch** (BF16, SDPA) | ⚠️ Fallback only | Only choice for full-precision training or gradient-based use. ~6930ms TTFT — ~60× slower than llama.cpp Vulkan. |
 | **ONNX Runtime** | ❌ Avoid | Image encoding is CPU-only on this platform. MIGraphX support incomplete on Linux. |
 
 !!! tip "Production Recommendation"
-    Use **SmolVLM2-2.2B-Instruct** (proper llama.cpp support, no patch needed, ~95ms TTFT with Q4_K_M Vulkan) over SmolVLM-Instruct. The original's tokenizer lacks `<global-img>` and requires a quick-fix patch.
+    Use **SmolVLM2-2.2B-Instruct** (proper llama.cpp support, no patch needed, ~93ms TTFT with Q8_0 Vulkan, 3.9GB memory) over SmolVLM-Instruct. The original's tokenizer lacks `<global-img>` and requires a quick-fix patch.
 
 !!! tip "Quantization Priority"
-    - **f16** — best accuracy, memory ~0.2GB (Vulkan), ~116ms TTFT
-    - **Q8_0** — near-f16 latency, memory ~0.2GB (Vulkan), ~95ms TTFT
-    - **Q4_K_M** — fastest, ~95ms TTFT, but accuracy loss — use only for latency-critical, accuracy-tolerant workloads
+    - **Q8_0** — best balance: fastest TTFT (~93ms), 3.9GB memory, good accuracy
+    - **Q4_K_M** — lowest memory (3.2GB) and best efficiency (1.86 tok/J), but slight accuracy loss — use for memory-constrained or latency-critical workloads
+    - **f16** — best accuracy, but highest TTFT (~117ms) and memory (5.4GB)
 
 ---
 
