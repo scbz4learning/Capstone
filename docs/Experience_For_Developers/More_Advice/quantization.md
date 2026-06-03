@@ -124,7 +124,7 @@ from quark.torch.quantization import Int4PerGroupSpec
 from quark.torch import ModelQuantizer
 
 model = AutoModelForImageTextToText.from_pretrained(
-    "/home/bokai/capstone/models/SmolVLM-Instruct",
+    "~/capstone/models/SmolVLM-Instruct",
     torch_dtype=torch.bfloat16,
     device_map="auto",
 ).eval()
@@ -402,7 +402,7 @@ Created a clang wrapper with `--rocm-path` and patched `CMakeTestHIPCompiler.cma
 ```bash
 cat > /tmp/hip-clang-wrapper.sh << 'SCRIPT'
 #!/bin/bash
-ROCM_PATH=/home/bokai/.venv3/lib/python3.10/.../_rocm_sdk_core
+ROCM_PATH=~/.venv3/lib/python3.10/.../_rocm_sdk_core
 exec $ROCM_PATH/lib/llvm/bin/clang++ \
   "--rocm-path=$ROCM_PATH" \
   "--rocm-device-lib-path=$ROCM_PATH/lib/llvm/amdgcn/bitcode" "$@"
@@ -553,7 +553,7 @@ These were not retested during this quantization investigation session. Their li
 The TheRock SDK installs ROCm shared libraries with versioned suffixes. Fix before running any quantization code:
 
 ```bash
-source /home/bokai/capstone/scripts/rocm/fix_rocm_so.sh
+source ~/capstone/scripts/rocm/fix_rocm_so.sh
 ```
 
 This script (reproduced below) creates unversioned symlinks and sets `LD_LIBRARY_PATH`:

@@ -4,7 +4,7 @@ import os
 os.environ["AMD_SERIALIZE_KERNEL"] = "3"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
 
-MODEL_PATH = "/home/bokai/capstone/models/SmolVLM-Instruct"
+MODEL_PATH = "~/capstone/models/SmolVLM-Instruct"
 
 from transformers import AutoModelForImageTextToText, AutoTokenizer
 from optimum.gptq import GPTQQuantizer

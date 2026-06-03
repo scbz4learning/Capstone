@@ -71,7 +71,7 @@ quant_model = quantizer.quantize_model(model)
 
 **Important:** The vision encoder (`model.vision_model.*`) and connector (`model.connector.*`) must be excluded from quantization to avoid Conv2D compatibility issues.
 
-See `/home/bokai/capstone/scripts/quantize_smolvlm.py` for a complete working example.
+See `~/capstone/scripts/quantize_smolvlm.py` for a complete working example.
 
 ### Other Libraries
 

@@ -3,7 +3,7 @@ import time
 import os
 os.environ["QUARK_LOG_LEVEL"] = "warning"
 
-MODEL_PATH = "/home/bokai/capstone/models/SmolVLM-Instruct"
+MODEL_PATH = "~/capstone/models/SmolVLM-Instruct"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 from transformers import AutoModelForImageTextToText, AutoProcessor

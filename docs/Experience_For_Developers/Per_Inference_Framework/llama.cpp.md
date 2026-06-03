@@ -17,7 +17,7 @@ Vulkan is the recommended backend for llama.cpp on gfx1103. It works out of the 
 
 **Example:**
 ```bash
-/home/bokai/capstone/third-party/llama-cpp/out/vulkan/llama-b9357/llama-cli \
+~/capstone/third-party/llama-cpp/out/vulkan/llama-b9357/llama-cli \
   -m model.gguf --mmproj mmproj.gguf \
   -ngl 99 -p "hello" -n 10
 ```
@@ -40,7 +40,7 @@ This is purely a llama.cpp build-time issue — the prebuilt archives from the l
 
 ```bash
 # Source the fix script to add ROCm libs to LD_LIBRARY_PATH
-source /home/bokai/capstone/scripts/rocm/fix_rocm_so.sh
+source ~/capstone/scripts/rocm/fix_rocm_so.sh
 
 # Force gfx1103 detection (kernel JIT only works if code objects include gfx1103)
 export HSA_OVERRIDE_GFX_VERSION=11.0.3
