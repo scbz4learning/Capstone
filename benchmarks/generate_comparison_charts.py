@@ -635,7 +635,7 @@ def plot_family():
         ]
         leg = color_legend + [Patch(facecolor='none', edgecolor='none', label='')] + alpha_legend + [Patch(facecolor='none', edgecolor='none', label='')] + [Patch(facecolor='white', edgecolor='gray', label='* = ROCm CPU fallback')]
         plot_bars(ax, groups, labels, f'{metric} ({unit})', f'SmolVLM Family: {metric}', leg, fig_w=16, fig_h=5.5, errors=err_vals if any(v is not None for v in err_vals) else None, footnote=make_footnote(metric))
-        fname = f'smolvlm_llamacpp_{sanitize(metric)}.png'
+        fname = f'smolvlm_family_{sanitize(metric)}.png'
         fig.savefig(output_dir / fname, dpi=300, bbox_inches='tight')
         plt.close(fig)
         print(f'  - {fname}')

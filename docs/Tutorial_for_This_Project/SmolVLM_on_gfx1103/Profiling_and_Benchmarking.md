@@ -47,6 +47,30 @@ Profiling results for **SmolVLM** and **SmolVLM2** family on AMD Radeon 780M (gf
 
 ## 2. Full SmolVLM Family (All Models)
 
+
+### Charts — Family Normalized Ratios
+
+![SmolVLM Family TTFT ratio](../../assets/profiling/smolvlm_family_dtype_ttft_ratio.png)
+
+![SmolVLM Family TPOT ratio](../../assets/profiling/smolvlm_family_dtype_tpot_ratio.png)
+
+![SmolVLM Family Energy ratio](../../assets/profiling/smolvlm_family_dtype_energy_ratio.png)
+
+### Charts — Family
+
+![Family TTFT (ms)](../../assets/profiling/smolvlm_family_ttft_ms.png)
+
+![Family TPOT (ms)](../../assets/profiling/smolvlm_family_tpot_ms.png)
+
+![Family Avg Power (W)](../../assets/profiling/smolvlm_family_avg_power_w.png)
+
+![Family Energy per Inference (J)](../../assets/profiling/smolvlm_family_energy_per_inference_j.png)
+
+![Family Peak Memory (GB)](../../assets/profiling/smolvlm_family_peak_memory_gb.png)
+
+![Family Tokens per Joule](../../assets/profiling/smolvlm_family_tokens_per_joule.png)
+
+
 ### Raw Data
 
 | Model | Backend | Dtype | TTFT (ms) | TPOT (ms) | Avg Power (W) | Energy per Inference (J) | Peak Memory (GB) | Tokens per Joule |
@@ -102,28 +126,6 @@ Profiling results for **SmolVLM** and **SmolVLM2** family on AMD Radeon 780M (gf
 
 !!! note "Quantization note"
     The official releases do not provide Q4_K_M quantization for the 256M and 500M models, likely due to accuracy concerns. Therefore this project did not test those quantizations.
-
-### Charts — llama.cpp
-
-![llama.cpp TTFT (ms)](../../assets/profiling/smolvlm_llamacpp_ttft_ms.png)
-
-![llama.cpp TPOT (ms)](../../assets/profiling/smolvlm_llamacpp_tpot_ms.png)
-
-![llama.cpp Avg Power (W)](../../assets/profiling/smolvlm_llamacpp_avg_power_w.png)
-
-![llama.cpp Energy per Inference (J)](../../assets/profiling/smolvlm_llamacpp_energy_per_inference_j.png)
-
-![llama.cpp Peak Memory (GB)](../../assets/profiling/smolvlm_llamacpp_peak_memory_gb.png)
-
-![llama.cpp Tokens per Joule](../../assets/profiling/smolvlm_llamacpp_tokens_per_joule.png)
-
-### Charts — Family Normalized Ratios
-
-![SmolVLM Family TTFT ratio](../../assets/profiling/smolvlm_family_dtype_ttft_ratio.png)
-
-![SmolVLM Family TPOT ratio](../../assets/profiling/smolvlm_family_dtype_tpot_ratio.png)
-
-![SmolVLM Family Energy ratio](../../assets/profiling/smolvlm_family_dtype_energy_ratio.png)
 
 ---
 
