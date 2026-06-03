@@ -35,3 +35,4 @@ Composable Kernel (CK) support is not yet available for gfx1103 in the current R
 - Use CPU inference on Linux as a fallback (~35.8s/image)
 
 **Reference**: See [VGGT Overview](../../Tutorial_for_This_Project/VGGT_on_gfx1103/VGGT_Overview.md) for deployment profiles.
+
