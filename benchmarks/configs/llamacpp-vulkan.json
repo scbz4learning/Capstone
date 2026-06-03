@@ -14,7 +14,7 @@
     "execution": {
         "device": "vulkan",
         "quantizations": ["f16", "Q8_0", "Q4_K_M"],
-        "is_integrated": false,
+        "is_integrated": true,
         "sampling_randomness": false,
         "temperature": null,
         "passes": {
