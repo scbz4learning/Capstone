@@ -5,8 +5,8 @@
         "quant": "Q8_0",
         "backend": "llamacpp",
         "status": "ok",
-        "is_integrated": false,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.224600000000002,
             "ttft_ms_p50": 19.9145,
@@ -16,15 +16,15 @@
             "tpot_ms_p95": 3.5500703125
         },
         "power_energy": {
-            "avg_total_adjusted_w": 67.85000441281186,
+            "avg_total_adjusted_w": 33.325912,
             "avg_idle_w": 1.94,
-            "energy_per_inference_j": 32.7721739922448,
-            "tokens_per_joule_p50": 3.9057524847234695,
-            "raw_energy_j": 327.721739922448,
-            "measurement_mode": "gpu_plus_cpu_separate",
-            "avg_gpu_w": 34.52542880539339,
+            "energy_per_inference_j": 16.560259600000002,
+            "tokens_per_joule_p50": 7.729347431244374,
+            "raw_energy_j": 165.602596,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
             "avg_cpu_w": 35.267276275042335,
-            "raw_gpu_energy_j": 162.11914392244802,
+            "raw_gpu_energy_j": 0.0,
             "raw_cpu_energy_j": 165.602596
         },
         "memory": {
@@ -52,8 +52,8 @@
         "quant": "f16",
         "backend": "llamacpp",
         "status": "ok",
-        "is_integrated": false,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.8868,
             "ttft_ms_p50": 20.8985,
@@ -63,15 +63,15 @@
             "tpot_ms_p95": 4.9226265625000005
         },
         "power_energy": {
-            "avg_total_adjusted_w": 49.187230511511494,
+            "avg_total_adjusted_w": 23.964369,
             "avg_idle_w": 1.8,
-            "energy_per_inference_j": 33.02955304850893,
-            "tokens_per_joule_p50": 3.8753173502533476,
-            "raw_energy_j": 330.29553048508933,
-            "measurement_mode": "gpu_plus_cpu_separate",
-            "avg_gpu_w": 25.22429973207135,
+            "energy_per_inference_j": 16.6901708,
+            "tokens_per_joule_p50": 7.669184547829792,
+            "raw_energy_j": 166.901708,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
             "avg_cpu_w": 25.76583768196522,
-            "raw_gpu_energy_j": 163.39382248508934,
+            "raw_gpu_energy_j": 0.0,
             "raw_cpu_energy_j": 166.901708
         },
         "memory": {

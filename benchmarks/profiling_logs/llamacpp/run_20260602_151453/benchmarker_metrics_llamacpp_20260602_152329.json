@@ -5,8 +5,8 @@
         "quant": "Q4_K_M",
         "backend": "llamacpp",
         "status": "ok",
-        "is_integrated": false,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 94.91005,
             "ttft_ms_p50": 94.95400000000001,
@@ -16,15 +16,15 @@
             "tpot_ms_p95": 15.357898828125
         },
         "power_energy": {
-            "avg_total_adjusted_w": 68.31673011179042,
+            "avg_total_adjusted_w": 33.425893,
             "avg_idle_w": 1.84,
-            "energy_per_inference_j": 141.85174740784464,
-            "tokens_per_joule_p50": 0.9023505338427814,
-            "raw_energy_j": 1418.5174740784464,
-            "measurement_mode": "gpu_plus_cpu_separate",
-            "avg_gpu_w": 34.89255346111459,
+            "energy_per_inference_j": 71.30504049999999,
+            "tokens_per_joule_p50": 1.7951045129832024,
+            "raw_energy_j": 713.050405,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
             "avg_cpu_w": 35.26762689211406,
-            "raw_gpu_energy_j": 705.4670690784465,
+            "raw_gpu_energy_j": 0.0,
             "raw_cpu_energy_j": 713.050405
         },
         "memory": {
@@ -52,8 +52,8 @@
         "quant": "Q8_0",
         "backend": "llamacpp",
         "status": "ok",
-        "is_integrated": false,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 94.26644999999999,
             "ttft_ms_p50": 94.1545,
@@ -63,15 +63,15 @@
             "tpot_ms_p95": 24.482069531249998
         },
         "power_energy": {
-            "avg_total_adjusted_w": 67.50671716422109,
+            "avg_total_adjusted_w": 33.011664,
             "avg_idle_w": 1.9,
-            "energy_per_inference_j": 221.23614732141542,
-            "tokens_per_joule_p50": 0.5785672981099221,
-            "raw_energy_j": 2212.361473214154,
-            "measurement_mode": "gpu_plus_cpu_separate",
-            "avg_gpu_w": 34.49681449790317,
+            "energy_per_inference_j": 111.2820533,
+            "tokens_per_joule_p50": 1.1502303938886793,
+            "raw_energy_j": 1112.820533,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
             "avg_cpu_w": 34.91344623228116,
-            "raw_gpu_energy_j": 1099.5409402141538,
+            "raw_gpu_energy_j": 0.0,
             "raw_cpu_energy_j": 1112.820533
         },
         "memory": {
@@ -99,8 +99,8 @@
         "quant": "f16",
         "backend": "llamacpp",
         "status": "ok",
-        "is_integrated": false,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "is_integrated": true,
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 115.92004999999999,
             "ttft_ms_p50": 115.956,
@@ -110,15 +110,15 @@
             "tpot_ms_p95": 46.741647265625
         },
         "power_energy": {
-            "avg_total_adjusted_w": 54.41064548572472,
+            "avg_total_adjusted_w": 26.403567,
             "avg_idle_w": 1.88,
-            "energy_per_inference_j": 343.1439143875381,
-            "tokens_per_joule_p50": 0.37302133196347476,
-            "raw_energy_j": 3431.4391438753805,
-            "measurement_mode": "gpu_plus_cpu_separate",
-            "avg_gpu_w": 28.00487142968151,
+            "energy_per_inference_j": 172.4146844,
+            "tokens_per_joule_p50": 0.7423961621681917,
+            "raw_energy_j": 1724.146844,
+            "measurement_mode": "RAPL_only_integrated_gpu",
+            "avg_gpu_w": 0.0,
             "avg_cpu_w": 28.28133805537315,
-            "raw_gpu_energy_j": 1707.2922998753804,
+            "raw_gpu_energy_j": 0.0,
             "raw_cpu_energy_j": 1724.146844
         },
         "memory": {

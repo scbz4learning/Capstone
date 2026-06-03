@@ -664,7 +664,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 95.89265000000002,
             "ttft_ms_p50": 95.82300000000001,
@@ -674,11 +674,11 @@
             "tpot_ms_p95": 15.256727734375
         },
         "power_energy": {
-            "avg_total_adjusted_w": 65.89112722841548,
+            "avg_total_adjusted_w": 32.251138,
             "avg_idle_w": 1.79,
-            "energy_per_inference_j": 136.90432751293014,
-            "tokens_per_joule_p50": 0.9349594883179339,
-            "raw_energy_j": 1369.0432751293015,
+            "energy_per_inference_j": 68.8578832,
+            "tokens_per_joule_p50": 1.8589011751671156,
+            "raw_energy_j": 688.578832,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 34.04197393111325,
@@ -711,7 +711,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 92.83995000000002,
             "ttft_ms_p50": 92.7485,
@@ -721,11 +721,11 @@
             "tpot_ms_p95": 24.427835156249998
         },
         "power_energy": {
-            "avg_total_adjusted_w": 66.73465445965712,
+            "avg_total_adjusted_w": 32.648711,
             "avg_idle_w": 1.77,
-            "energy_per_inference_j": 217.5110355752613,
-            "tokens_per_joule_p50": 0.5884758888737419,
-            "raw_energy_j": 2175.110355752613,
+            "energy_per_inference_j": 109.2838076,
+            "tokens_per_joule_p50": 1.1712622648407796,
+            "raw_energy_j": 1092.838076,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 34.42058513674719,
@@ -758,7 +758,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 117.29150000000001,
             "ttft_ms_p50": 117.1625,
@@ -768,11 +768,11 @@
             "tpot_ms_p95": 46.69071875
         },
         "power_energy": {
-            "avg_total_adjusted_w": 54.47810296209192,
+            "avg_total_adjusted_w": 26.472777,
             "avg_idle_w": 1.81,
-            "energy_per_inference_j": 342.5405459783125,
-            "tokens_per_joule_p50": 0.3736783907856098,
-            "raw_energy_j": 3425.4054597831246,
+            "energy_per_inference_j": 172.11448330000002,
+            "tokens_per_joule_p50": 0.7436910453194847,
+            "raw_energy_j": 1721.144833,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 28.282971886071124,
@@ -805,7 +805,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.224600000000002,
             "ttft_ms_p50": 19.9145,
@@ -815,11 +815,11 @@
             "tpot_ms_p95": 3.5500703125
         },
         "power_energy": {
-            "avg_total_adjusted_w": 67.85000441281186,
+            "avg_total_adjusted_w": 33.325912,
             "avg_idle_w": 1.94,
-            "energy_per_inference_j": 32.7721739922448,
-            "tokens_per_joule_p50": 3.9057524847234695,
-            "raw_energy_j": 327.721739922448,
+            "energy_per_inference_j": 16.560259600000002,
+            "tokens_per_joule_p50": 7.729347431244374,
+            "raw_energy_j": 165.602596,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 35.267276275042335,
@@ -852,7 +852,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.8868,
             "ttft_ms_p50": 20.8985,
@@ -862,11 +862,11 @@
             "tpot_ms_p95": 4.9226265625000005
         },
         "power_energy": {
-            "avg_total_adjusted_w": 49.187230511511494,
+            "avg_total_adjusted_w": 23.964369,
             "avg_idle_w": 1.8,
-            "energy_per_inference_j": 33.02955304850893,
-            "tokens_per_joule_p50": 3.8753173502533476,
-            "raw_energy_j": 330.29553048508933,
+            "energy_per_inference_j": 16.6901708,
+            "tokens_per_joule_p50": 7.669184547829792,
+            "raw_energy_j": 166.901708,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 25.76583768196522,
@@ -899,7 +899,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 40.1991,
             "ttft_ms_p50": 40.233999999999995,
@@ -909,11 +909,11 @@
             "tpot_ms_p95": 6.61613515625
         },
         "power_energy": {
-            "avg_total_adjusted_w": 62.310206728690254,
+            "avg_total_adjusted_w": 30.483455,
             "avg_idle_w": 1.81,
-            "energy_per_inference_j": 56.17409230383125,
-            "tokens_per_joule_p50": 2.278630499406752,
-            "raw_energy_j": 561.7409230383125,
+            "energy_per_inference_j": 28.291479700000004,
+            "tokens_per_joule_p50": 4.524330341053175,
+            "raw_energy_j": 282.914797,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 32.29371709438103,
@@ -946,7 +946,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 42.12570000000001,
             "ttft_ms_p50": 42.085,
@@ -956,11 +956,11 @@
             "tpot_ms_p95": 10.900825
         },
         "power_energy": {
-            "avg_total_adjusted_w": 52.09317737415262,
+            "avg_total_adjusted_w": 25.311845,
             "avg_idle_w": 1.84,
-            "energy_per_inference_j": 74.799018765408,
-            "tokens_per_joule_p50": 1.711252394920395,
-            "raw_energy_j": 747.9901876540799,
+            "energy_per_inference_j": 37.6564389,
+            "tokens_per_joule_p50": 3.39915307286266,
+            "raw_energy_j": 376.564389,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 27.15131635926597,
@@ -993,7 +993,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.486250000000002,
             "ttft_ms_p50": 20.6435,
@@ -1003,11 +1003,11 @@
             "tpot_ms_p95": 3.543552734375
         },
         "power_energy": {
-            "avg_total_adjusted_w": 67.37993022066617,
+            "avg_total_adjusted_w": 33.19304,
             "avg_idle_w": 1.81,
-            "energy_per_inference_j": 32.53908227951136,
-            "tokens_per_joule_p50": 3.9337311022012686,
-            "raw_energy_j": 325.39082279511365,
+            "energy_per_inference_j": 16.4614534,
+            "tokens_per_joule_p50": 7.775741114086561,
+            "raw_energy_j": 164.614534,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 35.00205332207038,
@@ -1040,7 +1040,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 20.7502,
             "ttft_ms_p50": 20.695,
@@ -1050,11 +1050,11 @@
             "tpot_ms_p95": 4.9225707031249994
         },
         "power_energy": {
-            "avg_total_adjusted_w": 49.40724832354988,
+            "avg_total_adjusted_w": 24.068613,
             "avg_idle_w": 1.71,
-            "energy_per_inference_j": 33.15388626386394,
-            "tokens_per_joule_p50": 3.860784192274724,
-            "raw_energy_j": 331.5388626386394,
+            "energy_per_inference_j": 16.7196249,
+            "tokens_per_joule_p50": 7.655674141349905,
+            "raw_energy_j": 167.196249,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 25.779239185517493,
@@ -1087,7 +1087,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 40.65129999999999,
             "ttft_ms_p50": 40.2685,
@@ -1097,11 +1097,11 @@
             "tpot_ms_p95": 6.590660546875
         },
         "power_energy": {
-            "avg_total_adjusted_w": 62.56299802287251,
+            "avg_total_adjusted_w": 30.60348,
             "avg_idle_w": 1.77,
-            "energy_per_inference_j": 56.300596172948666,
-            "tokens_per_joule_p50": 2.2735105611812596,
-            "raw_energy_j": 563.0059617294867,
+            "energy_per_inference_j": 28.3314358,
+            "tokens_per_joule_p50": 4.5179496338833625,
+            "raw_energy_j": 283.314358,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 32.375609740474864,
@@ -1134,7 +1134,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 41.34625,
             "ttft_ms_p50": 41.3035,
@@ -1144,11 +1144,11 @@
             "tpot_ms_p95": 10.8908015625
         },
         "power_energy": {
-            "avg_total_adjusted_w": 51.527987871158324,
+            "avg_total_adjusted_w": 25.186441,
             "avg_idle_w": 1.73,
-            "energy_per_inference_j": 74.35891283586616,
-            "tokens_per_joule_p50": 1.7213807345803565,
-            "raw_energy_j": 743.5891283586616,
+            "energy_per_inference_j": 37.5807912,
+            "tokens_per_joule_p50": 3.4059953479638287,
+            "raw_energy_j": 375.807912,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 26.91509303408583,
@@ -1181,7 +1181,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 94.91005,
             "ttft_ms_p50": 94.95400000000001,
@@ -1191,11 +1191,11 @@
             "tpot_ms_p95": 15.357898828125
         },
         "power_energy": {
-            "avg_total_adjusted_w": 68.31673011179042,
+            "avg_total_adjusted_w": 33.425893,
             "avg_idle_w": 1.84,
-            "energy_per_inference_j": 141.85174740784464,
-            "tokens_per_joule_p50": 0.9023505338427814,
-            "raw_energy_j": 1418.5174740784464,
+            "energy_per_inference_j": 71.30504049999999,
+            "tokens_per_joule_p50": 1.7951045129832024,
+            "raw_energy_j": 713.050405,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 35.26762689211406,
@@ -1228,7 +1228,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 94.26644999999999,
             "ttft_ms_p50": 94.1545,
@@ -1238,11 +1238,11 @@
             "tpot_ms_p95": 24.482069531249998
         },
         "power_energy": {
-            "avg_total_adjusted_w": 67.50671716422109,
+            "avg_total_adjusted_w": 33.011664,
             "avg_idle_w": 1.9,
-            "energy_per_inference_j": 221.23614732141542,
-            "tokens_per_joule_p50": 0.5785672981099221,
-            "raw_energy_j": 2212.361473214154,
+            "energy_per_inference_j": 111.2820533,
+            "tokens_per_joule_p50": 1.1502303938886793,
+            "raw_energy_j": 1112.820533,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 34.91344623228116,
@@ -1275,7 +1275,7 @@
         "backend": "llamacpp",
         "status": "ok",
         "is_integrated": true,
-        "measurement_mode": "gpu_plus_cpu_separate",
+        "measurement_mode": "RAPL_only_integrated_gpu",
         "latency": {
             "ttft_ms_mean": 115.92004999999999,
             "ttft_ms_p50": 115.956,
@@ -1285,11 +1285,11 @@
             "tpot_ms_p95": 46.741647265625
         },
         "power_energy": {
-            "avg_total_adjusted_w": 54.41064548572472,
+            "avg_total_adjusted_w": 26.403567,
             "avg_idle_w": 1.88,
-            "energy_per_inference_j": 343.1439143875381,
-            "tokens_per_joule_p50": 0.37302133196347476,
-            "raw_energy_j": 3431.4391438753805,
+            "energy_per_inference_j": 172.4146844,
+            "tokens_per_joule_p50": 0.7423961621681917,
+            "raw_energy_j": 1724.146844,
             "measurement_mode": "RAPL_only_integrated_gpu",
             "avg_gpu_w": 0.0,
             "avg_cpu_w": 28.28133805537315,
