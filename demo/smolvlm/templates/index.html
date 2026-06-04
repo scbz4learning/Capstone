@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmolVLM Dashcam Hazard Detection</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; }
+h1 { text-align: center; padding: 12px; font-size: 18px; background: #16213e; border-bottom: 1px solid #0f3460; }
+h1 small { font-weight: normal; color: #888; font-size: 13px; }
+.container { display: flex; flex: 1; gap: 12px; padding: 12px; min-height: 0; }
+.video-panel { flex: 1; display: flex; flex-direction: column; background: #16213e; border-radius: 8px; padding: 10px; }
+.video-panel video { width: 100%; flex: 1; border-radius: 4px; background: #000; object-fit: contain; min-height: 0; }
+.video-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.video-controls button { background: #0f3460; color: #eee; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; }
+.video-controls button:hover { background: #1a5276; }
+.video-controls input[type="range"] { flex: 1; }
+.hazard-panel { width: 420px; min-width: 320px; display: flex; flex-direction: column; background: #16213e; border-radius: 8px; padding: 10px; }
+.hazard-panel h2 { font-size: 14px; color: #e74c3c; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.hazard-panel h2 .status { font-size: 12px; color: #888; font-weight: normal; }
+.hazard-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.hazard-card { background: #1a1a3e; border-radius: 6px; padding: 10px; border-left: 3px solid #e74c3c; }
+.hazard-card .time { font-size: 11px; color: #888; margin-bottom: 4px; }
+.hazard-card .text { font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.hazard-card .text .cursor { animation: blink 0.8s infinite; }
+.hazard-card.safe { border-left-color: #27ae60; }
+@keyframes blink { 50% { opacity: 0; } }
+.no-hazards { text-align: center; color: #555; margin-top: 40px; font-style: italic; }
+.capture-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
+.capture-overlay.active { display: flex; }
+.capture-overlay .msg { background: #16213e; padding: 20px; border-radius: 8px; text-align: center; }
+.capture-overlay .msg .spinner { border: 3px solid #333; border-top-color: #e74c3c; border-radius: 50%; width: 30px; height: 30px; animation: spin 0.8s linear infinite; margin: 10px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<h1>SmolVLM Dashcam Hazard Detection <small>llama.cpp Vulkan · 2.2B Q4_K_M</small></h1>
+
+<div class="container">
+  <div class="video-panel">
+    <video id="video" controls preload="auto" playsinline>
+      <source src="/video" type="video/mp4">
+    </video>
+    <div class="video-controls">
+      <button id="btnPlay">▶ Play</button>
+      <button id="btnCapture">📸 Capture Now</button>
+      <a href="/analysis" style="text-decoration:none;"><button style="background:#c0392b;">🔬 Full Analysis</button></a>
+      <span id="frameInfo" style="font-size:12px;color:#888;margin-left:auto;">--:--</span>
+    </div>
+  </div>
+
+  <div class="hazard-panel">
+    <h2>
+      ⚠ Hazard Descriptions
+      <span class="status" id="statusText">idle</span>
+    </h2>
+    <div class="hazard-list" id="hazardList">
+      <div class="no-hazards">Play the video to start hazard detection</div>
+    </div>
+  </div>
+</div>
+
+<div class="capture-overlay" id="overlay">
+  <div class="msg">
+    <div class="spinner"></div>
+    <p>Analyzing frame...</p>
+  </div>
+</div>
+
+<canvas id="captureCanvas" style="display:none;"></canvas>
+
+<script>
+const video = document.getElementById('video');
+const btnPlay = document.getElementById('btnPlay');
+const btnCapture = document.getElementById('btnCapture');
+const hazardList = document.getElementById('hazardList');
+const statusText = document.getElementById('statusText');
+const frameInfo = document.getElementById('frameInfo');
+const overlay = document.getElementById('overlay');
+const canvas = document.getElementById('captureCanvas');
+const ctx = canvas.getContext('2d');
+
+let captureInterval = null;
+let isCapturing = false;
+let activeStreams = {};
+
+function formatTime(t) {
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function updateFrameInfo() {
+  const t = formatTime(video.currentTime);
+  const d = formatTime(video.duration || 0);
+  frameInfo.textContent = `${t} / ${d}`;
+}
+
+video.addEventListener('timeupdate', updateFrameInfo);
+video.addEventListener('loadedmetadata', () => {
+  video.currentTime = 1.3;
+  updateFrameInfo();
+});
+
+btnPlay.addEventListener('click', () => {
+  if (video.paused) {
+    video.play();
+    btnPlay.textContent = '⏸ Pause';
+    startAutoCapture();
+  } else {
+    video.pause();
+    btnPlay.textContent = '▶ Play';
+    stopAutoCapture();
+  }
+});
+
+video.addEventListener('pause', () => {
+  if (document.querySelector('.capture-overlay.active')) return;
+  btnPlay.textContent = '▶ Play';
+  stopAutoCapture();
+});
+
+video.addEventListener('play', () => {
+  btnPlay.textContent = '⏸ Pause';
+  startAutoCapture();
+});
+
+async function captureAndAnalyze(frameId) {
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 360;
+  canvas.width = Math.min(w, 640);
+  canvas.height = Math.floor(canvas.width * (h / w));
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  if (!b64) return;
+
+  const cardId = `hazard-${frameId}`;
+  const card = document.createElement('div');
+  card.className = 'hazard-card';
+  card.id = cardId;
+  const ts = formatTime(video.currentTime);
+  
+  const noHazards = hazardList.querySelector('.no-hazards');
+  if (noHazards) noHazards.remove();
+
+  card.innerHTML = `<div class="time">⏱ ${ts} — frame ${frameId}</div><div class="text" id="text-${frameId}"><span class="cursor">▌</span></div>`;
+  hazardList.appendChild(card);
+  hazardList.scrollTop = hazardList.scrollHeight;
+
+  try {
+    statusText.textContent = 'analyzing...';
+    const resp = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: b64 }),
+    });
+    const result = await resp.json();
+    const fullText = result.text;
+    const textEl = document.getElementById(`text-${frameId}`);
+    textEl.innerHTML = fullText.replace(/\n/g, '<br>');
+
+    const lower = fullText.trim().toLowerCase();
+    if (lower.startsWith('danger: no') || lower.startsWith('no danger')) {
+      card.classList.add('safe');
+    }
+    statusText.textContent = 'idle';
+  } catch (e) {
+    const textEl = document.getElementById(`text-${frameId}`);
+    if (textEl) textEl.innerHTML = `Error: ${e.message}`;
+    statusText.textContent = 'error';
+  }
+}
+
+let frameCounter = 0;
+
+function startAutoCapture() {
+  if (captureInterval) return;
+  captureInterval = setInterval(() => {
+    if (video.paused || video.ended) return;
+    if (video.currentTime < 1.0) return;
+    frameCounter++;
+    captureAndAnalyze(frameCounter);
+  }, 1400);
+}
+
+function stopAutoCapture() {
+  if (captureInterval) {
+    clearInterval(captureInterval);
+    captureInterval = null;
+  }
+}
+
+btnCapture.addEventListener('click', () => {
+  frameCounter++;
+  captureAndAnalyze(frameCounter);
+});
+</script>
+</body>
+</html>

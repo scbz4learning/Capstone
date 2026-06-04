@@ -1,0 +1,42 @@
+{
+  "video": "smolvlm-demo.mp4",
+  "num_frames": 6,
+  "results": [
+    {
+      "frame": "frame_0030_t1.0s.png",
+      "timestamp": "1.0",
+      "hazard_text": " Danger: yes. The scene shows a busy intersection with multiple lanes of traffic, and there are several cars visible in the frame, indicating that there is a high likelihood of traffic congestion or accidents. The presence of multiple lanes and the number of cars suggests that the traffic is likely to be heavy, which increases the risk",
+      "tokens": 64
+    },
+    {
+      "frame": "frame_0061_t2.0s.png",
+      "timestamp": "2.0",
+      "hazard_text": " Danger: yes. The car is driving on a busy road with other vehicles, and there is a construction sign indicating a lane closure ahead.",
+      "tokens": 30
+    },
+    {
+      "frame": "frame_0092_t3.1s.png",
+      "timestamp": "3.1",
+      "hazard_text": " Danger: yes. The car is driving on the wrong side of the road, which is dangerous.",
+      "tokens": 22
+    },
+    {
+      "frame": "frame_0122_t4.1s.png",
+      "timestamp": "4.1",
+      "hazard_text": " Danger: yes. I see a car coming towards me on the road.",
+      "tokens": 17
+    },
+    {
+      "frame": "frame_0153_t5.1s.png",
+      "timestamp": "5.1",
+      "hazard_text": " Danger: yes.\n\nI see a car coming towards me on the road. The driver of the car is not visible, but the car is moving at a high speed and is approaching from the opposite direction. This is a dangerous situation because the car is likely to hit me if I don't take evasive",
+      "tokens": 64
+    },
+    {
+      "frame": "frame_0184_t6.1s.png",
+      "timestamp": "6.1",
+      "hazard_text": " Danger: yes.\n\nI see a car approaching from the opposite direction, and there is a yellow traffic light in the distance. The presence of the traffic light and the approaching car indicate that there is a potential for a collision.",
+      "tokens": 49
+    }
+  ]
+}

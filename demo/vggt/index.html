@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VGGT 3D Driving Demo</title>
+<style>
+body { font-family: system-ui; background: #111; color: #eee; max-width: 1400px; margin: auto; padding: 20px; }
+h1 { text-align: center; color: #4fc3f7; font-size: 20px; }
+h2 { color: #81d4fa; border-bottom: 1px solid #333; padding-bottom: 6px; margin-top: 30px; font-size: 15px; }
+h3 { color: #aaa; font-size: 13px; margin: 8px 0; }
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 12px 0; }
+.card { background: #1a1a2e; border-radius: 8px; padding: 8px; text-align: center; }
+.card img { width: 100%; border-radius: 4px; max-height: 280px; object-fit: contain; }
+.card .label { font-size: 11px; color: #888; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+.full { width: 100%; margin: 8px 0; border-radius: 6px; max-height: 500px; object-fit: contain; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+td, th { padding: 6px 10px; border: 1px solid #333; text-align: center; }
+th { background: #1a3a5c; }
+.stats { background: #1a1a2e; padding: 16px; border-radius: 8px; line-height: 1.8; text-align: center; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<h1>VGGT 3D Scene Reconstruction — All Outputs</h1>
+<p style="text-align:center;color:#aaa;">Camera · Depth · Point Cloud · Unprojected · Tracks</p>
+<div class="stats">
+  <b>Device:</b> cpu · <b>Dtype:</b> float32<br>
+  <b>Total time:</b> 75.31s · <b>Per frame:</b> 18.83s · <b>Frames:</b> 4
+</div><h2> Camera Parameters</h2><h3>Intrinsics</h3><table><tr><th>Frame</th><th>fx</th><th>fy</th><th>cx</th><th>cy</th><th>Center X</th><th>Center Y</th><th>Center Z</th></tr><tr><td>1</td><td>365.02</td><td>363.0</td><td>259.0</td><td>147.0</td><td>0.0</td><td>-0.0</td><td>-0.0</td></tr><tr><td>2</td><td>371.79</td><td>370.6</td><td>259.0</td><td>147.0</td><td>0.003</td><td>0.006</td><td>0.117</td></tr><tr><td>3</td><td>373.15</td><td>379.41</td><td>259.0</td><td>147.0</td><td>0.002</td><td>-0.012</td><td>-0.032</td></tr><tr><td>4</td><td>360.45</td><td>357.31</td><td>259.0</td><td>147.0</td><td>0.106</td><td>0.104</td><td>1.336</td></tr></table><h3>Camera Poses</h3><div class="two-col"><div class="card"><img class="full" src="camera_views/camera_topdown.png"><div class="label">Top-down (XZ plane)</div></div><div class="card"><img class="full" src="camera_views/camera_3d.png"><div class="label">3D View</div></div></div><h2>Frame 1</h2>
+<div class="grid">
+<div class="card"><img src="input_frames/frame_0060_t2.0s.png"><div class="label">Original</div></div>
+<div class="card"><img src="depth_maps/depth_0000_color.png"><div class="label">Depth (Inferno)</div></div>
+<div class="card"><img src="confidence_maps/conf_0000.png"><div class="label">Confidence (Viridis)</div></div>
+<div class="card"><img src="pointcloud_views/pc_0000.png"><div class="label">Point Cloud (Point Head)</div></div>
+<div class="card"><img src="unproject_views/unproj_0000.png"><div class="label">Point Cloud (Depth+Cam)</div></div>
+<div class="card"><img src="track_views/tracks_0000.png"><div class="label">Tracks Overlay</div></div>
+</div>
+<h2>Frame 2</h2>
+<div class="grid">
+<div class="card"><img src="input_frames/frame_0120_t4.0s.png"><div class="label">Original</div></div>
+<div class="card"><img src="depth_maps/depth_0001_color.png"><div class="label">Depth (Inferno)</div></div>
+<div class="card"><img src="confidence_maps/conf_0001.png"><div class="label">Confidence (Viridis)</div></div>
+<div class="card"><img src="pointcloud_views/pc_0001.png"><div class="label">Point Cloud (Point Head)</div></div>
+<div class="card"><img src="unproject_views/unproj_0001.png"><div class="label">Point Cloud (Depth+Cam)</div></div>
+<div class="card"><img src="track_views/tracks_0001.png"><div class="label">Tracks Overlay</div></div>
+</div>
+<h2>Frame 3</h2>
+<div class="grid">
+<div class="card"><img src="input_frames/frame_0180_t6.0s.png"><div class="label">Original</div></div>
+<div class="card"><img src="depth_maps/depth_0002_color.png"><div class="label">Depth (Inferno)</div></div>
+<div class="card"><img src="confidence_maps/conf_0002.png"><div class="label">Confidence (Viridis)</div></div>
+<div class="card"><img src="pointcloud_views/pc_0002.png"><div class="label">Point Cloud (Point Head)</div></div>
+<div class="card"><img src="unproject_views/unproj_0002.png"><div class="label">Point Cloud (Depth+Cam)</div></div>
+<div class="card"><img src="track_views/tracks_0002.png"><div class="label">Tracks Overlay</div></div>
+</div>
+<h2>Frame 4</h2>
+<div class="grid">
+<div class="card"><img src="input_frames/frame_0240_t8.0s.png"><div class="label">Original</div></div>
+<div class="card"><img src="depth_maps/depth_0003_color.png"><div class="label">Depth (Inferno)</div></div>
+<div class="card"><img src="confidence_maps/conf_0003.png"><div class="label">Confidence (Viridis)</div></div>
+<div class="card"><img src="pointcloud_views/pc_0003.png"><div class="label">Point Cloud (Point Head)</div></div>
+<div class="card"><img src="unproject_views/unproj_0003.png"><div class="label">Point Cloud (Depth+Cam)</div></div>
+<div class="card"><img src="track_views/tracks_0003.png"><div class="label">Tracks Overlay</div></div>
+</div>
+<h2> Track Trails (all points across frames)</h2><div class="card"><img class="full" src="track_views/tracks_trails.png"><div class="label">Colored lines show point movement across frames</div></div>
+</body></html>

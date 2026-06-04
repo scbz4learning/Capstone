@@ -1,0 +1,8 @@
+{
+  "video": "vggt-demo.mp4",
+  "device": "cpu",
+  "dtype": "float32",
+  "num_images": 4,
+  "inference_time_s": 75.31,
+  "time_per_image_s": 18.83
+}

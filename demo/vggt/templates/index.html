@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VGGT 3D Scene Reconstruction — All Outputs</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+h1 { text-align: center; padding: 12px; font-size: 18px; background: #16213e; border-bottom: 1px solid #0f3460; }
+h1 small { font-weight: normal; color: #888; font-size: 13px; }
+.stats { text-align: center; padding: 10px; background: #112033; font-size: 13px; color: #81d4fa; border-bottom: 1px solid #0f3460; }
+.stats span { margin: 0 12px; }
+.content { max-width: 1500px; margin: 0 auto; padding: 16px; }
+.video-bar { text-align: center; margin-bottom: 16px; }
+.video-bar video { max-width: 640px; width: 100%; border-radius: 6px; background: #000; }
+
+/* Camera info section */
+.camera-section { background: #16213e; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+.camera-section h2 { font-size: 16px; color: #4fc3f7; margin-bottom: 12px; }
+.camera-section h3 { font-size: 13px; color: #81d4fa; margin: 12px 0 6px; }
+.camera-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
+.camera-table th, .camera-table td { padding: 6px 10px; border: 1px solid #333; text-align: center; }
+.camera-table th { background: #1a3a5c; color: #81d4fa; }
+.camera-table td { color: #ccc; }
+.camera-table .highlight { color: #4fc3f7; font-weight: bold; }
+.pose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pose-grid img { width: 100%; max-height: 400px; object-fit: contain; border-radius: 4px; background: #111; }
+
+/* Frame sections */
+.frame-section { margin-bottom: 28px; background: #16213e; border-radius: 8px; padding: 14px; }
+.frame-section h2 { font-size: 14px; color: #4fc3f7; margin-bottom: 10px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.card { text-align: center; background: #1a1a2e; border-radius: 6px; padding: 6px; }
+.card img { width: 100%; border-radius: 4px; display: block; max-height: 260px; object-fit: contain; }
+.card .label { font-size: 11px; color: #888; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Track trail overview */
+.trail-section { margin-bottom: 28px; background: #16213e; border-radius: 8px; padding: 14px; }
+.trail-section h2 { font-size: 14px; color: #4fc3f7; margin-bottom: 10px; }
+.trail-section img { width: 100%; max-height: 500px; object-fit: contain; border-radius: 4px; }
+
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: repeat(2, 1fr); }
+  .pose-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<h1>VGGT 3D Scene Reconstruction <small>Camera · Depth · Point Cloud · Unprojected · Tracks</small></h1>
+
+<div class="stats" id="stats">
+  <span>Device: {{ summary.device or 'cpu' }}</span>
+  <span>Dtype: {{ summary.dtype or 'bfloat16' }}</span>
+  <span>Time: {{ '%0.1f'|format(summary.inference_time_s) if summary.inference_time_s else '—' }}s total</span>
+  <span>{{ '%0.1f'|format(summary.time_per_image_s) if summary.time_per_image_s else '—' }}s per frame</span>
+</div>
+
+<div class="content">
+  <!-- Video -->
+  <div class="video-bar">
+    <video controls preload="auto">
+      <source src="/video" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- Camera Info -->
+  {% if cameras_data %}
+  <div class="camera-section">
+    <h2> Camera Parameters</h2>
+    <h3>Intrinsics (per-frame focal length & principal point)</h3>
+    <table class="camera-table">
+      <tr>
+        <th>Frame</th>
+        <th>fx</th>
+        <th>fy</th>
+        <th>cx</th>
+        <th>cy</th>
+        <th>Center X</th>
+        <th>Center Y</th>
+        <th>Center Z</th>
+      </tr>
+      {% for c in cameras_data %}
+      <tr>
+        <td>{{ c.frame + 1 }}</td>
+        <td class="highlight">{{ c.fx }}</td>
+        <td class="highlight">{{ c.fy }}</td>
+        <td>{{ c.cx }}</td>
+        <td>{{ c.cy }}</td>
+        <td>{{ c.pos_x }}</td>
+        <td>{{ c.pos_y }}</td>
+        <td>{{ c.pos_z }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <h3>Camera Poses</h3>
+    <div class="pose-grid">
+      <div class="card"><img src="/camera/camera_topdown.png"><div class="label">Top-down View (XZ plane)</div></div>
+      <div class="card"><img src="/camera/camera_3d.png"><div class="label">3D View</div></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Track Trail Overview -->
+  <div class="trail-section">
+    <h2> Track Trails — Point Movement Across Frames</h2>
+    <img src="/track/tracks_trails.png">
+    <div class="label" style="text-align:center;margin-top:8px;color:#888;font-size:11px;">Colored lines show each point's trajectory · Circles = start, Squares = end</div>
+  </div>
+
+  <!-- Per-frame Sections (6 visualizations each: 3×2 grid) -->
+  {% for i in range(frame_count) %}
+  <div class="frame-section">
+    <h2>Frame {{ i+1 }} — t={{ (i*2+2) }}s (approx)</h2>
+    <div class="grid">
+      <!-- Row 1 -->
+      <div class="card">
+        <img src="/frames/{{ frame_names[i] }}" alt="Original frame {{ i+1 }}">
+        <div class="label">Original</div>
+      </div>
+      <div class="card">
+        <img src="/depth/depth_{{ '%04d'|format(i) }}_color.png" alt="Depth map {{ i+1 }}">
+        <div class="label">Depth (Inferno)</div>
+      </div>
+      <div class="card">
+        <img src="/confidence/conf_{{ '%04d'|format(i) }}.png" alt="Confidence {{ i+1 }}">
+        <div class="label">Confidence (Viridis)</div>
+      </div>
+      <!-- Row 2 -->
+      <div class="card">
+        <img src="/pointcloud/pc_{{ '%04d'|format(i) }}.png" alt="Point cloud {{ i+1 }}">
+        <div class="label">Point Cloud (Point Head)</div>
+      </div>
+      <div class="card">
+        <img src="/unproject/unproj_{{ '%04d'|format(i) }}.png" alt="Unprojected {{ i+1 }}">
+        <div class="label">Point Cloud (Depth+Cam)</div>
+      </div>
+      <div class="card">
+        <img src="/track/tracks_{{ '%04d'|format(i) }}.png" alt="Tracks {{ i+1 }}">
+        <div class="label">Tracks Overlay</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+const video = document.querySelector('video');
+if (video) {
+  video.addEventListener('loadedmetadata', () => { video.currentTime = 2.0; });
+}
+</script>
+</body>
+</html>

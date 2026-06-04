@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Full Video Analysis — SmolVLM Hazard Detection</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',system-ui,sans-serif; background:#1a1a2e; color:#eee; min-height:100vh; }
+h1 { text-align:center; padding:12px; font-size:16px; background:#16213e; border-bottom:1px solid #0f3460; display:flex; align-items:center; justify-content:center; gap:12px; }
+h1 a { text-decoration:none; color:#4fc3f7; font-size:13px; }
+.toolbar { display:flex; gap:10px; align-items:center; padding:12px; background:#16213e; border-bottom:1px solid #0f3460; justify-content:center; }
+.toolbar button { background:#0f3460; color:#eee; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-size:13px; }
+.toolbar button:hover { background:#1a5276; }
+.toolbar button:disabled { opacity:0.4; cursor:not-allowed; }
+.toolbar button.primary { background:#c0392b; }
+.toolbar button.primary:hover { background:#e74c3c; }
+.toolbar select { background:#0f3460; color:#eee; border:none; padding:6px 10px; border-radius:4px; }
+.progress { display:flex; align-items:center; gap:8px; margin:0 12px; padding:8px 14px; background:#1a1a3e; border-radius:6px; font-size:12px; min-width:200px; }
+.progress-bar { flex:1; height:6px; background:#333; border-radius:3px; overflow:hidden; }
+.progress-bar .fill { height:100%; background:#4fc3f7; border-radius:3px; transition:width 0.3s; }
+.video-preview { text-align:center; padding:10px; background:#0d1b2a; border-bottom:1px solid #0f3460; }
+.video-preview video { max-width:500px; width:100%; border-radius:6px; max-height:240px; }
+.results { padding:12px; display:flex; flex-direction:column; gap:10px; max-width:1100px; margin:0 auto; }
+.result-row { display:flex; gap:12px; background:#16213e; border-radius:8px; padding:10px; align-items:flex-start; border-left:4px solid #e74c3c; }
+.result-row.safe { border-left-color:#27ae60; }
+.result-row img { width:360px; height:auto; border-radius:4px; flex-shrink:0; }
+.result-row .info { flex:1; min-width:0; }
+.result-row .time { font-size:12px; color:#888; margin-bottom:4px; }
+.result-row .badge { display:inline-block; padding:2px 10px; border-radius:4px; font-size:12px; font-weight:bold; margin-bottom:6px; }
+.result-row .badge.danger { background:#e74c3c; color:#fff; }
+.result-row .badge.safe { background:#27ae60; color:#fff; }
+.result-row .desc { font-size:13px; line-height:1.5; color:#ccc; }
+.placeholder { text-align:center; color:#555; padding:40px; font-style:italic; }
+.empty { text-align:center; color:#666; padding:20px; }
+</style>
+</head>
+<body>
+
+<h1>
+  🔬 Full Video Analysis
+  <a href="/">← Back to Live Feed</a>
+</h1>
+
+<div class="toolbar">
+  <label style="font-size:12px;color:#888;">Interval:</label>
+  <select id="intervalSelect">
+    <option value="500">0.5s</option>
+    <option value="700" selected>0.7s</option>
+    <option value="1000">1.0s</option>
+    <option value="1400">1.4s</option>
+    <option value="2000">2.0s</option>
+  </select>
+  <label style="font-size:12px;color:#888;margin-left:8px;">Max:</label>
+  <select id="maxSelect">
+    <option value="0" selected>All</option>
+    <option value="10">10 frames</option>
+    <option value="20">20 frames</option>
+    <option value="30">30 frames</option>
+  </select>
+  <button class="primary" id="btnStart" onclick="startAnalysis()">▶ Run Analysis</button>
+  <button id="btnStop" onclick="stopAnalysis()" disabled>⏹ Stop</button>
+  <div class="progress" id="progressPanel" style="display:none;">
+    <span id="progressText">0/0</span>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div class="video-preview">
+  <video id="video" preload="auto">
+    <source src="/video" type="video/mp4">
+  </video>
+</div>
+
+<div class="results" id="results">
+  <div class="empty">Click "Run Analysis" to start</div>
+</div>
+
+<canvas id="captureCanvas" style="display:none;"></canvas>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('captureCanvas');
+const ctx = canvas.getContext('2d');
+const results = document.getElementById('results');
+
+let running = false;
+let stopRequested = false;
+let totalFrames = 0;
+let completedFrames = 0;
+let frameCounter = 0;
+
+function formatTime(t) {
+  const m = Math.floor(t/60), s = Math.floor(t%60);
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+document.getElementById('intervalSelect').value = '700';
+
+function setButtons(starting) {
+  document.getElementById('btnStart').disabled = starting;
+  document.getElementById('btnStop').disabled = !starting;
+  document.getElementById('intervalSelect').disabled = starting;
+  document.getElementById('maxSelect').disabled = starting;
+}
+
+async function startAnalysis() {
+  running = true;
+  stopRequested = false;
+  frameCounter = 0;
+  completedFrames = 0;
+  results.innerHTML = '';
+  setButtons(true);
+  document.getElementById('progressPanel').style.display = 'flex';
+  document.getElementById('progressFill').style.width = '0%';
+
+  if (video.readyState < 2) {
+    await new Promise(r => { video.addEventListener('loadeddata', r, {once:true}); });
+    if (video.readyState < 2) { alert('Video failed to load'); setButtons(false); return; }
+  }
+
+  const interval = parseInt(document.getElementById('intervalSelect').value);
+  const maxLimit = parseInt(document.getElementById('maxSelect').value);
+  const duration = video.duration || 7;
+  totalFrames = Math.floor(duration * 1000 / interval);
+  if (maxLimit > 0) totalFrames = Math.min(totalFrames, maxLimit);
+
+  const promises = [];
+  for (let i = 0; i < totalFrames && !stopRequested; i++) {
+    const t = (i + 1) * interval / 1000;
+    if (t > duration) break;
+    
+    video.currentTime = t;
+    await new Promise(r => {
+      const handler = () => { video.removeEventListener('seeked', handler); r(); };
+      video.addEventListener('seeked', handler);
+    });
+
+    if (stopRequested) break;
+    const p = captureAndAnalyze(i, t);
+    promises.push(p);
+    completedFrames = i + 1;
+    updateProgress();
+  }
+
+  await Promise.allSettled(promises);
+  running = false;
+  setButtons(false);
+  if (results.children.length === 0) results.innerHTML = '<div class="empty">No results</div>';
+}
+
+function stopAnalysis() {
+  stopRequested = true;
+}
+
+function updateProgress() {
+  document.getElementById('progressText').textContent = `${completedFrames}/${totalFrames}`;
+  document.getElementById('progressFill').style.width = `${(completedFrames/totalFrames*100).toFixed(0)}%`;
+}
+
+async function captureAndAnalyze(idx, timestamp) {
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 360;
+  canvas.width = Math.min(w, 720);
+  canvas.height = Math.floor(canvas.width * (h / w));
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const b64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  if (!b64) return;
+
+  // Create card placeholder
+  const row = document.createElement('div');
+  row.className = 'result-row';
+  row.innerHTML = `<img src="data:image/jpeg;base64,${b64}"><div class="info"><div class="time">⏱ ${formatTime(timestamp)}</div><div class="badge" style="background:#555;">Analyzing...</div><div class="desc">⏳</div></div>`;
+  results.appendChild(row);
+  results.scrollTop = results.scrollHeight;
+
+  try {
+    const resp = await fetch('/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({image: b64}),
+    });
+    const data = await resp.json();
+    const text = data.text.trim();
+    const lower = text.toLowerCase();
+
+    const badge = row.querySelector('.badge');
+    const desc = row.querySelector('.desc');
+
+    if (lower.startsWith('danger: yes')) {
+      badge.textContent = '⚠ DANGER';
+      badge.className = 'badge danger';
+      row.classList.remove('safe');
+    } else if (lower.startsWith('danger: no')) {
+      badge.textContent = '✓ SAFE';
+      badge.className = 'badge safe';
+      row.classList.add('safe');
+    } else {
+      badge.textContent = '? UNKNOWN';
+      badge.className = 'badge';
+    }
+    desc.textContent = text;
+    results.scrollTop = results.scrollHeight;
+  } catch(e) {
+    const badge = row.querySelector('.badge');
+    const desc = row.querySelector('.desc');
+    badge.textContent = '✗ ERROR';
+    badge.className = 'badge';
+    desc.textContent = e.message;
+  }
+}
+</script>
+</body>
+</html>
