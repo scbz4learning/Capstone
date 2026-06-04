@@ -9,7 +9,7 @@ VGGT jointly predicts **6 types of 3D attributes** from a set of images in a sin
 | Output | Description |
 |--------|-------------|
 | **Intrinsics** (`fx`, `fy`, `cx`, `cy`) | Focal length & principal point in pixels, recovered per frame |
-| **Extrinsics** (`R|t`, 3×4 matrix) | Camera pose in world coordinates (OpenCV convention: camera-from-world) |
+| **Extrinsics** (`R\|t`, 3×4 matrix) | Camera pose in world coordinates (OpenCV convention: camera-from-world) |
 
 ## 2. Depth Map
 
