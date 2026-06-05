@@ -337,8 +337,8 @@ to CPU inference.
 |------|-----------|-------------|
 | ROCm (Official) | Production | Device in AMD compatibility tables |
 | Vulkan | Production | No ROCm, but Vulkan-capable driver available |
-| WSL2 (librocdxg) | Production (Windows driver) | Device not officially supported; Windows host available. Routes ROCm through production AMD Windows driver via DXG bridge — often significantly faster than TheRock for Conv-heavy models |
+| WSL2 (librocdxg) | Production (Windows driver) | Routes ROCm through production AMD Windows driver via DXG bridge|
 | TheRock | Community | Device not officially supported; headless Linux only; no Windows host available |
 | CPU | Baseline | No GPU acceleration path available |
 
-The recommended priority is: **ROCm → Vulkan → WSL2 (librocdxg) → TheRock → CPU**.
+The recommended priority is: **ROCm → Vulkan → TheRock → CPU**.

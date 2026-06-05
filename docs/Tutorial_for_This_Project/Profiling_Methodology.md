@@ -16,7 +16,7 @@
 | **OS (Windows)** | Windows 11 |
 | **WSL** | WSL 2 (Ubuntu 24.04) |
 | **Python** | 3.12.3 |
-| **PyTorch** | 2.10.0+rocm7.13.0a20260424 (Linux); Windows: TBD; WSL: TBD |
+| **PyTorch** | 2.10.0+rocm7.13.0a20260424 |
 | **ROCm** | 7.13.0a (installed via PyPI — `rocm-sdk-core`, `rocm-sdk-libraries-gfx110X-all`) |
 | **Transformers** | 5.8.1 |
 | **llama.cpp** | b9357 (official for most models; patched for SmolVLM-Instruct — see below) |
